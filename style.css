@@ -14,3 +14,19 @@ body{
 .buttons{
     font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
 }
+
+#pause{
+    width: 50px;
+}
+
+#mass{
+    width: 100px;
+}
+
+#vel{
+    width: 25px;
+}
+
+#radius{
+    width: 25px;
+}

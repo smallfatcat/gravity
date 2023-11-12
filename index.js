@@ -5,6 +5,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("reset").addEventListener("click", reset);
     document.getElementById("seed").value = defaultSeed;
     document.getElementById("startn").value = numberOfRocks;
+    document.getElementById("mass").value = baseMass.toExponential();
+    document.getElementById("vel").value = planarVelFactor;
+    document.getElementById("radius").value = baseRadius;
 
 
     setInterval(draw, 10);
@@ -49,6 +52,9 @@ let baseMass = 1e7;
 let numberOfRocks = 1500;
 let frame = 0;
 let simStart = Date.now();
+let frameTime;
+let simTime;
+let timestring;
 let paused = false;
 
 let defaultSeed = Date.now();
@@ -60,7 +66,13 @@ function reset() {
     numberOfRocks = document.getElementById("startn").value;;
     frame = 0;
     simStart = Date.now();
+    
     defaultSeed = document.getElementById("seed").value;
+    baseRadius = document.getElementById("radius").value;
+    baseMass = document.getElementById("mass").value;
+    planarVelFactor = document.getElementById("vel").value;
+
+
     rocks = initRocks(defaultSeed);
     paused = false;
 }
@@ -108,17 +120,19 @@ function initRocks(rockSeed) {
 }
 
 function draw() {
-    let startTime;
+    frameTime = Date.now();
     if(!paused){
         frame++;
-        startTime = Date.now();
+        simTime = Math.floor((Date.now() - simStart) / 1000);
         updateRocks();
+        timestring = Date.now() - frameTime;
     }
     const canvasLeft = document.getElementById("canvasLeft");
     if (canvasLeft.getContext) {
         const ctxLeft = canvasLeft.getContext("2d");
         ctxLeft.clearRect(0, 0, canvasLeft.width, canvasLeft.height);
         ctxLeft.scale(canvasScale, canvasScale);
+        ctxLeft.lineWidth = 1 / canvasScale;
         ctxLeft.translate(-rocks[0].px + maxwidth / 2 / canvasScale, -rocks[0].py + maxheight / 2 / canvasScale);
         for (let rock of rocks) {
             ctxLeft.beginPath();
@@ -132,6 +146,7 @@ function draw() {
         const ctxRight = canvasRight.getContext("2d");
         ctxRight.clearRect(0, 0, canvasRight.width, canvasRight.height);
         ctxRight.scale(canvasScale, canvasScale);
+        ctxRight.lineWidth = 1 / canvasScale;
         ctxRight.translate(-rocks[0].px + maxwidth / 2 / canvasScale, -rocks[0].pz + maxheight / 2 / canvasScale);
         for (let rock of rocks) {
             ctxRight.beginPath();
@@ -140,8 +155,7 @@ function draw() {
         }
         ctxRight.setTransform(1, 0, 0, 1, 0, 0);
     }
-    let timestring = Date.now() - startTime;
-    let simTime = Math.floor((Date.now() - simStart) / 1000);
+    
     document.getElementById("status").innerHTML = "Frame Time:" +timestring
         + " N:" + rocks.length
         + " Frame:" + frame
