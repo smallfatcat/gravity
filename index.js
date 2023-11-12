@@ -3,6 +3,12 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(draw, 10);
 });
 
+var mySeed = Date.now();
+
+var seed = mySeed ^ 0xDEADBEEF; // 32-bit seed with optional XOR value
+var rand = sfc32(0x9E3779B9, 0x243F6A88, 0xB7E15162, seed);
+for (var i = 0; i < 15; i++) rand();
+
 let frame = 0;
 
 let maxwidth = 800;
@@ -11,9 +17,9 @@ let maxdepth = 50;
 let border = 100;
 
 let timeFactor = 10;
-let numberOfRocks = 15000;
 let gravityConst = 6.67e-11;
 
+let numberOfRocks = 15000;
 let planarVelFactor = 15;
 let outOfPlaneVelFactor = 1;
 let maxMassVariance = 30;
@@ -34,9 +40,9 @@ for (let i = 0; i < numberOfRocks; i++) {
         // vx: 0,
         // vy: 0,
         // vz: 0,
-        vx: ((Math.random() * planarVelFactor)),
-        vy: ((Math.random() * planarVelFactor)),
-        vz: ((Math.random() * outOfPlaneVelFactor * 2) - outOfPlaneVelFactor),
+        vx: ((rand() * planarVelFactor)),
+        vy: ((rand() * planarVelFactor)),
+        vz: ((rand() * outOfPlaneVelFactor * 2) - outOfPlaneVelFactor),
         ax: 0.0,
         ay: 0.0,
         az: 0.0
@@ -90,13 +96,17 @@ function draw() {
     }
     let timestring = Date.now() - startTime;
     let simTime = Math.floor((Date.now() - simStart) / 1000);
-    document.getElementById("status").innerHTML = timestring + ":" + rocks.length + ":" + frame + ":" + simTime;
+    document.getElementById("status").innerHTML = timestring
+        + ":" + rocks.length
+        + ":" + frame
+        + ":" + simTime
+        + ":" + mySeed;
 }
 
 function getRandomInt(min, max) {
     min = Math.ceil(min);
     max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min) + min); // The maximum is exclusive and the minimum is inclusive
+    return Math.floor(rand() * (max - min) + min); // The maximum is exclusive and the minimum is inclusive
 }
 
 function updateRocks() {
@@ -106,13 +116,28 @@ function updateRocks() {
         rocks[i].az = 0.0;
     }
 
+    // combine rocks
+    for (let i = 0; i < numberOfRocks; i++) {
+        for (let j = i + 1; j < numberOfRocks; j++) {
+            let dist2 = getDistance2(rocks[i], rocks[j]);
+            if (dist2 <= (rocks[i].r + rocks[j].r) * (rocks[i].r + rocks[j].r)) {
+                rocks[i] = combineRocks(rocks[i], rocks[j]);
+                rocks.splice(j, 1);
+                j--;
+                numberOfRocks--;
+            }
+        }
+    }
+
+    // Calc acceleration due to gravity
     for (let i = 0; i < numberOfRocks; i++) {
         for (let j = i + 1; j < numberOfRocks; j++) {
             let dist = getDistance(rocks[i], rocks[j]);
-            let vecToRockx = (rocks[j].px - rocks[i].px) / dist;
-            let vecToRocky = (rocks[j].py - rocks[i].py) / dist;
-            let vecToRockz = (rocks[j].pz - rocks[i].pz) / dist;
-            let force = gravityConst * rocks[i].m * rocks[j].m / (dist * dist);
+            let distinv = 1 / dist;
+            let vecToRockx = (rocks[j].px - rocks[i].px) * distinv;
+            let vecToRocky = (rocks[j].py - rocks[i].py) * distinv;
+            let vecToRockz = (rocks[j].pz - rocks[i].pz) * distinv;
+            let force = gravityConst * rocks[i].m * rocks[j].m * distinv * distinv;
             let accela = force / rocks[i].m;
             let accelb = force / rocks[j].m;
             rocks[i].ax += vecToRockx * accela;
@@ -121,23 +146,6 @@ function updateRocks() {
             rocks[j].ax -= vecToRockx * accelb;
             rocks[j].ay -= vecToRocky * accelb;
             rocks[j].az -= vecToRockz * accelb;
-        }
-    }
-
-    // combine rocks
-    let newRocks = [];
-    let oldIndexOfRocks = [];
-    let newNumberOfRocks = numberOfRocks;
-    let skipFlag = false;
-    for (let i = 0; i < numberOfRocks; i++) {
-        for (let j = i + 1; j < numberOfRocks; j++) {
-            let dist = getDistance(rocks[i], rocks[j]);
-            if (dist <= (rocks[i].r + rocks[j].r)) {
-                rocks[i] = combineRocks(rocks[i], rocks[j]);
-                rocks.splice(j, 1);
-                j--;
-                numberOfRocks--;
-            }
         }
     }
 
@@ -154,10 +162,18 @@ function updateRocks() {
 
 function getDistance(a, b) {
     let dist = Math.sqrt((a.px - b.px) * (a.px - b.px) + (a.py - b.py) * (a.py - b.py) + (a.pz - b.pz) * (a.pz - b.pz));
-    if (dist < (a.r + b.r) / 1) {
-        dist = (a.r + b.r) / 1;
+    if (dist < (a.r + b.r)) {
+        dist = (a.r + b.r);
     }
     return dist;
+}
+
+function getDistance2(a, b) {
+    let dist2 = (a.px - b.px) * (a.px - b.px) + (a.py - b.py) * (a.py - b.py) + (a.pz - b.pz) * (a.pz - b.pz);
+    if (dist2 < (a.r + b.r)) {
+        dist2 = (a.r + b.r) * (a.r + b.r);
+    }
+    return dist2;
 }
 
 function combineRocks(a, b) {
@@ -190,4 +206,18 @@ function combineRocks(a, b) {
     }
 
     return rock;
+}
+
+function sfc32(a, b, c, d) {
+    return function () {
+        a >>>= 0; b >>>= 0; c >>>= 0; d >>>= 0;
+        var t = (a + b) | 0;
+        a = b ^ b >>> 9;
+        b = c + (c << 3) | 0;
+        c = (c << 21 | c >>> 11);
+        d = d + 1 | 0;
+        t = t + d | 0;
+        c = c + t | 0;
+        return (t >>> 0) / 4294967296;
+    }
 }
