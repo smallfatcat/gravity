@@ -11,9 +11,15 @@
 	<script src="index.js"></script>
     <div id="status"></div>
     <div id="control">
-      <button id="scaleup">+</button>
-      <button id="scaledn">-</button>
+      <button id="pause" class="buttons">Pause</button>
+      <button id="scaleup" class="buttons">+</button>
+      <button id="scaledn" class="buttons">-</button>
       <span id="scalelabel"></span>
+      <label for="seed">Seed</label>
+      <input type="text" id="seed">
+      <label for="startn">Start N</label>
+      <input type="text" id="startn">
+      <button id="reset" class="buttons">Reset</button>
     </div>
     <canvas id="canvasLeft" width="800" height="800"></canvas>
     <canvas id="canvasRight" width="800" height="800"></canvas>
