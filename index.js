@@ -5,9 +5,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("reset").addEventListener("click", reset);
     document.getElementById("seed").value = defaultSeed;
     document.getElementById("startn").value = numberOfRocks;
-    document.getElementById("mass").value = baseMass.toExponential();
-    document.getElementById("vel").value = planarVelFactor;
-    document.getElementById("radius").value = baseRadius;
+    document.getElementById("mass").value = initMass.toExponential();
+    document.getElementById("vel").value = initVelocityXY;
+    document.getElementById("radius").value = initRadius;
 
 
     setInterval(draw, 10);
@@ -34,26 +34,26 @@ function pauseClick() {
 }
 
 
-let maxwidth = 800;
-let maxheight = 800;
-let maxdepth = 50;
-let border = 100;
+let canvasWidth = 800;
+let canvasHeight = 800;
+let canvasDepth = 50;
+let canvasBorder = 100;
 let canvasScale = 1.0;
 
 let timeFactor = 10;
 let gravityConst = 6.67e-11;
 
-let planarVelFactor = 4;
-let outOfPlaneVelFactor = 1;
-let maxMassVariance = 30;
-let baseRadius = 1.0;
-let baseMass = 1e7;
+let initVelocityXY = 4;
+let initVelocityZ = 1;
+let initMassVariance = 30;
+let initRadius = 1.0;
+let initMass = 1e7;
 
 let numberOfRocks = 1500;
-let frame = 0;
-let simStart = Date.now();
+let frameCounter = 0;
 let frameTime;
 let simTime;
+let simStart = Date.now();
 let timestring;
 let paused = false;
 
@@ -64,14 +64,13 @@ let rocks = initRocks(defaultSeed);
 
 function reset() {
     numberOfRocks = document.getElementById("startn").value;;
-    frame = 0;
+    frameCounter = 0;
     simStart = Date.now();
     
     defaultSeed = document.getElementById("seed").value;
-    baseRadius = document.getElementById("radius").value;
-    baseMass = document.getElementById("mass").value;
-    planarVelFactor = document.getElementById("vel").value;
-
+    initRadius = document.getElementById("radius").value;
+    initMass = document.getElementById("mass").value;
+    initVelocityXY = document.getElementById("vel").value;
 
     rocks = initRocks(defaultSeed);
     paused = false;
@@ -85,24 +84,24 @@ function initRocks(rockSeed) {
     
     let rocks = [];
     for (let i = 0; i < numberOfRocks; i++) {
-        let massVariance = getRandomInt(1, maxMassVariance);
+        let massVariance = getRandomInt(1, initMassVariance);
         let rock = {
-            px: getRandomInt(border, maxwidth - border),
-            py: getRandomInt(border, maxheight - border),
-            pz: getRandomInt(0, maxdepth),
-            r:  baseRadius * (massVariance ** (1 / 3)),
-            m:  baseMass * massVariance,
-            vx: ((rand() * planarVelFactor)),
-            vy: ((rand() * planarVelFactor)),
-            vz: ((rand() * outOfPlaneVelFactor * 2) - outOfPlaneVelFactor),
+            px: getRandomInt(canvasBorder, canvasWidth - canvasBorder),
+            py: getRandomInt(canvasBorder, canvasHeight - canvasBorder),
+            pz: getRandomInt(0, canvasDepth),
+            r:  initRadius * (massVariance ** (1 / 3)),
+            m:  initMass * massVariance,
+            vx: ((rand() * initVelocityXY)),
+            vy: ((rand() * initVelocityXY)),
+            vz: ((rand() * initVelocityZ * 2) - initVelocityZ),
             ax: 0.0,
             ay: 0.0,
             az: 0.0
         };
-        if (rock.px < (maxwidth / 2)) {
+        if (rock.px < (canvasWidth / 2)) {
             rock.vy *= -1;
         }
-        if (rock.py > (maxheight / 2)) {
+        if (rock.py > (canvasHeight / 2)) {
             rock.vx *= -1;
         }
         rocks.push(rock)
@@ -113,16 +112,16 @@ function initRocks(rockSeed) {
     rocks[0].vx = 0;
     rocks[0].vy = 0;
     rocks[0].vz = 0;
-    rocks[0].px = maxwidth / 2;
-    rocks[0].py = maxheight / 2;
-    rocks[0].pz = 0 + (maxdepth / 2);
+    rocks[0].px = canvasWidth / 2;
+    rocks[0].py = canvasHeight / 2;
+    rocks[0].pz = 0 + (canvasDepth / 2);
     return rocks;
 }
 
 function draw() {
     frameTime = Date.now();
     if(!paused){
-        frame++;
+        frameCounter++;
         simTime = Math.floor((Date.now() - simStart) / 1000);
         updateRocks();
         timestring = Date.now() - frameTime;
@@ -133,7 +132,7 @@ function draw() {
         ctxLeft.clearRect(0, 0, canvasLeft.width, canvasLeft.height);
         ctxLeft.scale(canvasScale, canvasScale);
         ctxLeft.lineWidth = 1 / canvasScale;
-        ctxLeft.translate(-rocks[0].px + maxwidth / 2 / canvasScale, -rocks[0].py + maxheight / 2 / canvasScale);
+        ctxLeft.translate(-rocks[0].px + canvasWidth / 2 / canvasScale, -rocks[0].py + canvasHeight / 2 / canvasScale);
         for (let rock of rocks) {
             ctxLeft.beginPath();
             ctxLeft.arc(rock.px, rock.py, rock.r, 0, Math.PI * 2, true);
@@ -147,7 +146,7 @@ function draw() {
         ctxRight.clearRect(0, 0, canvasRight.width, canvasRight.height);
         ctxRight.scale(canvasScale, canvasScale);
         ctxRight.lineWidth = 1 / canvasScale;
-        ctxRight.translate(-rocks[0].px + maxwidth / 2 / canvasScale, -rocks[0].pz + maxheight / 2 / canvasScale);
+        ctxRight.translate(-rocks[0].px + canvasWidth / 2 / canvasScale, -rocks[0].pz + canvasHeight / 2 / canvasScale);
         for (let rock of rocks) {
             ctxRight.beginPath();
             ctxRight.arc(rock.px, rock.pz, rock.r, 0, Math.PI * 2, true);
@@ -158,7 +157,7 @@ function draw() {
     
     document.getElementById("status").innerHTML = "Frame Time:" +timestring
         + " N:" + rocks.length
-        + " Frame:" + frame
+        + " Frame:" + frameCounter
         + " Time:" + simTime;
     document.getElementById("scalelabel").innerHTML = (canvasScale*100).toFixed(0) + "%";
 }
