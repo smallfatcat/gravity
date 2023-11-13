@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("seed").value = defaultSeed;
     document.getElementById("startn").value = numberOfRocks;
     document.getElementById("mass").value = initMass.toExponential();
+    document.getElementById("massv").value = initMassVar;
     document.getElementById("vel").value = initVelocityXY;
     document.getElementById("velz").value = initVelocityZ;
     document.getElementById("radius").value = initRadius;
@@ -41,18 +42,21 @@ let spawnBorderTop      = 500;
 let spawnBorderBottom   = 100;
 let spawnBorderLeft     = 100;
 let spawnBorderRight    = 100;
+let spawnInnerRadius    = 100;
+let spawnOuterRadius    = 400;
 
 let timeFactor      = 10;
 let gravityConst    = 6.67e-11;
 
 let uniqueID        = 0;
-let initVelocityXY  = 4;
-let initVelocityZ   = 1;
+let initVelocityXY  = 1;
+let initVelocityZ   = 0;
 let initMassVar     = 30;
 let initRadius      = 1.0;
 let initMass        = 1e7;
 let initSolarMass   = 1e14;
 let initSolarRadius = 10;
+
 
 let numberOfRocks   = 1500;
 let frameCounter    = 0;
@@ -77,8 +81,9 @@ function reset() {
     defaultSeed     = Number(document.getElementById("seed").value);
     initRadius      = Number(document.getElementById("radius").value);
     initMass        = Number(document.getElementById("mass").value);
+    initMassVar     = Number(document.getElementById("massv").value);
     initVelocityXY  = Number(document.getElementById("vel").value);
-    initVelocityZ  = Number(document.getElementById("velz").value);
+    initVelocityZ   = Number(document.getElementById("velz").value);
     initSolarMass   = Number(document.getElementById("solarmass").value);
     initSolarRadius = Number(document.getElementById("solarradius").value);
 
@@ -127,7 +132,9 @@ function initRocks(rockSeed) {
     rocks[0].matColor = chroma(237,226,12);
 
     for(let i = 1; i < numberOfRocks; i++){
-        setVelocityVector(rocks[0], rocks[i], (rand() * initVelocityXY) )
+        getRockInRing(400, 400, spawnInnerRadius, spawnOuterRadius, rocks[i]);
+        setVelocityVector(rocks[0], rocks[i], initVelocityXY, LEFT_PANE);
+        setVelocityVector(rocks[0], rocks[i], initVelocityZ, RIGHT_PANE);
     }
 
     return rocks;
@@ -276,14 +283,21 @@ function combineRocks(a, b) {
     return rock;
 }
 
-function setVelocityVector(to, from, velocity) {
+function setVelocityVector(to, from, velocity, pane) {
     let ox = to.px - from.px;
-    let oy = to.py - from.py;
-    let magO = Math.sqrt(ox*ox+oy*oy);
-    ox = ox / magO;
-    oy = oy / magO;
-    from.vx = oy*velocity;
-    from.vy = -ox*velocity;
+    let oy = pane == LEFT_PANE ? to.py - from.py : to.pz - from.pz;
+    let r = Math.sqrt(ox*ox+oy*oy);
+    ox = ox / r;
+    oy = oy / r;
+    velocity *= (gravityConst * to.m / r) ** 0.5;
+    if(pane == LEFT_PANE){
+        from.vx = oy*velocity;
+        from.vy = -ox*velocity;
+    }
+    else{
+        from.vx += oy*velocity;
+        from.vz = -ox*velocity;
+    }
     return from;
 }
 
@@ -389,4 +403,12 @@ function getClosestRockIndex(x, y, pane){
 function getNewID() {
     uniqueID++;
     return uniqueID;
+}
+
+function getRockInRing(centerX, centerY, innerRadius, outerRadius, rock){
+    let ringWidth = outerRadius - innerRadius;
+    let theta = rand()*Math.PI*2;
+    rock.px = ((rand()*ringWidth) + innerRadius) * Math.sin(theta) + centerX;
+    rock.py = ((rand()*ringWidth) + innerRadius) * Math.cos(theta) + centerY;
+    return rock;
 }
