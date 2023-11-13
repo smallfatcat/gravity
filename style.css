@@ -19,11 +19,19 @@ body{
     width: 50px;
 }
 
+#reset{
+    width: 50px;
+}
+
 #mass{
     width: 100px;
 }
 
 #vel{
+    width: 25px;
+}
+
+#velz{
     width: 25px;
 }
 

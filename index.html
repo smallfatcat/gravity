@@ -12,25 +12,28 @@
 	  <script src="index.js"></script>
     <div id="status"></div>
     <div id="control">
-      <button id="pause" class="buttons">Pause</button>
-      <button id="scaleup" class="buttons">+</button>
-      <button id="scaledn" class="buttons">-</button>
-      <span id="scalelabel"></span>
+      <button id="reset" class="buttons">Reset</button>
       <label for="seed">Seed</label>
       <input type="text" id="seed">
       <label for="startn">Start N</label>
       <input type="text" id="startn">
       <label for="mass">Mass</label>
       <input type="text" id="mass">
-      <label for="vel">Vel</label>
+      <label for="vel">VelXY</label>
       <input type="text" id="vel">
+      <label for="velz">VelZ</label>
+      <input type="text" id="velz">
       <label for="radius">Radius</label>
       <input type="text" id="radius">
       <label for="solarmass">Sol Mass</label>
       <input type="text" id="solarmass">
       <label for="solarradius">Sol Radius</label>
       <input type="text" id="solarradius">
-      <button id="reset" class="buttons">Reset</button>
+      <br>
+      <button id="pause" class="buttons">Pause</button>
+      <button id="scaleup" class="buttons">+</button>
+      <button id="scaledn" class="buttons">-</button>
+      <span id="scalelabel"></span>
     </div>
     <canvas id="canvasLeft" width="800" height="800"></canvas>
     <canvas id="canvasRight" width="800" height="800"></canvas>

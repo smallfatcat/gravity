@@ -3,16 +3,24 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("scaledn").addEventListener("click", scaleDn);
     document.getElementById("pause").addEventListener("click", pauseClick);
     document.getElementById("reset").addEventListener("click", reset);
+    document.getElementById("canvasLeft").addEventListener("click", canvasClick);
+    document.getElementById("canvasRight").addEventListener("click", canvasClick);
     document.getElementById("seed").value = defaultSeed;
     document.getElementById("startn").value = numberOfRocks;
     document.getElementById("mass").value = initMass.toExponential();
     document.getElementById("vel").value = initVelocityXY;
+    document.getElementById("velz").value = initVelocityZ;
     document.getElementById("radius").value = initRadius;
     document.getElementById("solarradius").value = initSolarRadius;
     document.getElementById("solarmass").value = initSolarMass.toExponential();
-
-    setInterval(draw, 10);
+    
+    requestAnimationFrame(animate);
 });
+
+function animate(timeStamp) {
+    draw();
+    requestAnimationFrame((t) => animate(t));
+}
 
 const MATERIAL_STAR = 0;
 const MATERIAL_SOLID = 1;
@@ -24,9 +32,17 @@ let canvasDepth     = 50;
 let canvasBorder    = 100;
 let canvasScale     = 1.0;
 
+let spawnWidth          = 800;
+let spawnHeight         = 400;
+let spawnBorderTop      = 500;
+let spawnBorderBottom   = 100;
+let spawnBorderLeft     = 100;
+let spawnBorderRight    = 100;
+
 let timeFactor      = 10;
 let gravityConst    = 6.67e-11;
 
+let uniqueID        = 0;
 let initVelocityXY  = 4;
 let initVelocityZ   = 1;
 let initMassVar     = 30;
@@ -39,8 +55,9 @@ let numberOfRocks   = 1500;
 let frameCounter    = 0;
 
 let frameTime;
+let fps;
 let simTime;
-let simStart = Date.now();
+let simStart = window.performance.now();
 let timestring;
 let paused = false;
 
@@ -52,12 +69,13 @@ let rocks = initRocks(defaultSeed);
 function reset() {
     numberOfRocks = document.getElementById("startn").value;;
     frameCounter = 0;
-    simStart = Date.now();
+    simStart = window.performance.now();
 
     defaultSeed     = Number(document.getElementById("seed").value);
     initRadius      = Number(document.getElementById("radius").value);
     initMass        = Number(document.getElementById("mass").value);
     initVelocityXY  = Number(document.getElementById("vel").value);
+    initVelocityZ  = Number(document.getElementById("velz").value);
     initSolarMass   = Number(document.getElementById("solarmass").value);
     initSolarRadius = Number(document.getElementById("solarradius").value);
 
@@ -76,9 +94,10 @@ function initRocks(rockSeed) {
         let massVariance = getRandomInt(1, initMassVar);
         let randomColor = "rgb(" + getRandomInt(128, 255) + "," + getRandomInt(128, 255) + "," + getRandomInt(128, 255) + ")";
         let rock = {
-            px: getRandomInt(canvasBorder, canvasWidth - canvasBorder),
-            py: getRandomInt(canvasBorder, canvasHeight - canvasBorder),
-            pz: getRandomInt(0, canvasDepth),
+            id: getNewID(),
+            px: getRandomInt(spawnBorderLeft, spawnWidth - spawnBorderRight),
+            py: getRandomInt(spawnBorderTop, spawnHeight - spawnBorderBottom),
+            pz: getRandomInt(spawnBorderTop, spawnHeight - spawnBorderBottom),
             r: initRadius * (massVariance ** (1 / 3)),
             m: initMass * massVariance,
             vx: 0.0,
@@ -100,7 +119,7 @@ function initRocks(rockSeed) {
     rocks[0].vz = 0;
     rocks[0].px = canvasWidth / 2;
     rocks[0].py = canvasHeight / 2;
-    rocks[0].pz = 0 + (canvasDepth / 2);
+    rocks[0].pz = canvasHeight / 2;
     rocks[0].material = MATERIAL_STAR;
     rocks[0].matColor = chroma(237,226,12);
 
@@ -112,13 +131,15 @@ function initRocks(rockSeed) {
 }
 
 function draw() {
-    frameTime = Date.now();
+    let physicsTimeStart = window.performance.now();
     if (!paused) {
         frameCounter++;
-        simTime = Math.floor((Date.now() - simStart) / 1000);
+        simTime = Math.floor((window.performance.now() - simStart) / 1000);
         updateRocks();
-        timestring = Date.now() - frameTime;
     }
+    let physicsTime = window.performance.now() - physicsTimeStart;
+    
+    let drawTimeStart = window.performance.now();
 
     let rocksSortedZ = clone(rocks);
     rocksSortedZ.sort((a, b) => a.pz - b.pz);
@@ -127,8 +148,13 @@ function draw() {
 
     drawCanvas("canvasLeft", false, rocksSortedZ);
     drawCanvas("canvasRight", true, rocksSortedY);
+    
+    let drawTime = window.performance.now() - drawTimeStart;
+    fps = 1000 / (physicsTime + drawTime);
 
-    document.getElementById("status").innerHTML = "Frame Time:" + timestring
+    document.getElementById("status").innerHTML = "Physics Time:" + physicsTime.toFixed(1)
+        + " Draw Time:" + drawTime.toFixed(1)
+        + " FPS:" + fps.toFixed(1)
         + " N:" + rocks.length
         + " Frame:" + frameCounter
         + " Time:" + simTime;
@@ -228,6 +254,7 @@ function combineRocks(a, b) {
     let newColor = chroma.average(colors, 'lch', [volumea/newVolume, volumeb/newVolume]);
 
     let rock = {
+        id: a.material != MATERIAL_STAR ? getNewID() : 0,
         px: newx,
         py: newy,
         pz: newz,
@@ -327,4 +354,51 @@ function pauseClick() {
         paused = true;
         document.getElementById("pause").innerHTML = "Play";
     }
+}
+
+function canvasClick(evt) {
+    let worldCoordX = ((evt.offsetX - rocks[0].px) / canvasScale) + rocks[0].px;
+    if(evt.srcElement.id == 'canvasLeft') {
+        let worldCoordY = ((evt.offsetY - rocks[0].py) / canvasScale) + rocks[0].py;
+        console.log('worldcoords:', worldCoordX, worldCoordY);
+        console.log('canvascoords:', evt.offsetX, evt.offsetY);
+        console.log('id:', getClosestRockIndexXY(worldCoordX, worldCoordY).id);
+    }
+    if(evt.srcElement.id == 'canvasRight') {
+        let worldCoordZ = ((evt.offsetY - rocks[0].pz) / canvasScale) + rocks[0].pz;
+        console.log('worldcoords:', worldCoordX, worldCoordZ);
+        console.log('canvascoords:', evt.offsetX, evt.offsetY);
+        console.log('id', getClosestRockIndexZ(worldCoordX, worldCoordZ).id);
+    }
+}
+
+function getClosestRockIndexXY(x, y){
+    let closestDist = Infinity;
+    let closestIndex = 0;
+    for(let i=0; i < numberOfRocks; i++) {
+        let dist = ((rocks[i].px - x) * (rocks[i].px - x) +  (rocks[i].py - y) * (rocks[i].py - y))**0.5;
+        if (dist < closestDist) {
+            closestIndex = i;
+            closestDist = dist;
+        }
+    }
+    return rocks[closestIndex];
+}
+
+function getClosestRockIndexZ(x, z){
+    let closestDist = Infinity;
+    let closestIndex = 0;
+    for(let i=0; i < numberOfRocks; i++) {
+        let dist = ((rocks[i].px - x) * (rocks[i].px - x) +  (rocks[i].pz - z) * (rocks[i].pz - z))**0.5;
+        if (dist < closestDist) {
+            closestIndex = i;
+            closestDist = dist;
+        }
+    }
+    return rocks[closestIndex];
+}
+
+function getNewID() {
+    uniqueID++;
+    return uniqueID;
 }
