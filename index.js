@@ -88,14 +88,8 @@ function initRocks(rockSeed) {
             ay: 0.0,
             az: 0.0,
             material: MATERIAL_SOLID,
-            materialColor: randomColor
+            matColor: chroma(getRandomInt(0, 255),getRandomInt(0, 255),getRandomInt(0, 255))
         };
-        // if (rock.px < (canvasWidth / 2)) {
-        //     rock.vy *= -1;
-        // }
-        // if (rock.py > (canvasHeight / 2)) {
-        //     rock.vx *= -1;
-        // }
         rocks.push(rock)
     }
 
@@ -108,7 +102,7 @@ function initRocks(rockSeed) {
     rocks[0].py = canvasHeight / 2;
     rocks[0].pz = 0 + (canvasDepth / 2);
     rocks[0].material = MATERIAL_STAR;
-    rocks[0].materialColor = 'rgb(255,255,0)';
+    rocks[0].matColor = chroma(237,226,12);
 
     for(let i = 1; i < numberOfRocks; i++){
         setVelocityVector(rocks[0], rocks[i], (rand() * initVelocityXY) )
@@ -154,7 +148,7 @@ function drawCanvas(canvasId, topView, sortedRocks) {
         for (let rock of sortedRocks) {
             ctx.beginPath();
             ctx.arc(rock.px, topView ? rock.pz : rock.py, rock.r, 0, Math.PI * 2, true);
-            ctx.fillStyle = rock.materialColor;
+            ctx.fillStyle = rock.matColor;
             ctx.fill();
             ctx.stroke();
         }
@@ -230,6 +224,9 @@ function combineRocks(a, b) {
 
     let newmaterial = a.material;
 
+    let colors = [a.matColor, b.matColor];
+    let newColor = chroma.average(colors, 'lch', [volumea/newVolume, volumeb/newVolume]);
+
     let rock = {
         px: newx,
         py: newy,
@@ -243,9 +240,8 @@ function combineRocks(a, b) {
         m: newm,
         r: newr,
         material: newmaterial,
-        materialColor: a.materialColor
+        matColor: a.material != MATERIAL_STAR ? newColor : chroma(237,226,12),
     }
-
     return rock;
 }
 
