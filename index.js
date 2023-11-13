@@ -24,6 +24,9 @@ function animate(timeStamp) {
 
 const MATERIAL_STAR = 0;
 const MATERIAL_SOLID = 1;
+const LEFT_PANE  = 0;
+const RIGHT_PANE = 1;
+
 const clone = (items) => items.map(item => Array.isArray(item) ? clone(item) : item);
 
 let canvasWidth     = 800;
@@ -175,6 +178,7 @@ function drawCanvas(canvasId, topView, sortedRocks) {
             ctx.beginPath();
             ctx.arc(rock.px, topView ? rock.pz : rock.py, rock.r, 0, Math.PI * 2, true);
             ctx.fillStyle = rock.matColor;
+            //ctx.strokeStyle = '#cccccc';
             ctx.fill();
             ctx.stroke();
         }
@@ -360,36 +364,20 @@ function canvasClick(evt) {
     let worldCoordX = ((evt.offsetX - rocks[0].px) / canvasScale) + rocks[0].px;
     if(evt.srcElement.id == 'canvasLeft') {
         let worldCoordY = ((evt.offsetY - rocks[0].py) / canvasScale) + rocks[0].py;
-        console.log('worldcoords:', worldCoordX, worldCoordY);
-        console.log('canvascoords:', evt.offsetX, evt.offsetY);
-        console.log('id:', getClosestRockIndexXY(worldCoordX, worldCoordY).id);
+        console.log(getClosestRockIndex(worldCoordX, worldCoordY, LEFT_PANE));
     }
     if(evt.srcElement.id == 'canvasRight') {
         let worldCoordZ = ((evt.offsetY - rocks[0].pz) / canvasScale) + rocks[0].pz;
-        console.log('worldcoords:', worldCoordX, worldCoordZ);
-        console.log('canvascoords:', evt.offsetX, evt.offsetY);
-        console.log('id', getClosestRockIndexZ(worldCoordX, worldCoordZ).id);
+        console.log(getClosestRockIndex(worldCoordX, worldCoordZ, RIGHT_PANE));
     }
 }
 
-function getClosestRockIndexXY(x, y){
+function getClosestRockIndex(x, y, pane){
     let closestDist = Infinity;
     let closestIndex = 0;
     for(let i=0; i < numberOfRocks; i++) {
-        let dist = ((rocks[i].px - x) * (rocks[i].px - x) +  (rocks[i].py - y) * (rocks[i].py - y))**0.5;
-        if (dist < closestDist) {
-            closestIndex = i;
-            closestDist = dist;
-        }
-    }
-    return rocks[closestIndex];
-}
-
-function getClosestRockIndexZ(x, z){
-    let closestDist = Infinity;
-    let closestIndex = 0;
-    for(let i=0; i < numberOfRocks; i++) {
-        let dist = ((rocks[i].px - x) * (rocks[i].px - x) +  (rocks[i].pz - z) * (rocks[i].pz - z))**0.5;
+        let opt = pane == LEFT_PANE ? rocks[i].py - y : rocks[i].pz - y;
+        let dist = ((rocks[i].px - x) * (rocks[i].px - x) +  opt * opt)**0.5;
         if (dist < closestDist) {
             closestIndex = i;
             closestDist = dist;
