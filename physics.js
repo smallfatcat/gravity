@@ -13,6 +13,14 @@ let uniqueID = 0;
 let gravityConst    = 6.67e-11;
 let genID = 0;
 
+let paused = false;
+
+let tickStart = Date.now();
+
+let simEnable = false;
+
+let updateIntervalID;
+
 
 onmessage = (evt) => {
     let data = JSON.parse(evt.data);
@@ -20,65 +28,73 @@ onmessage = (evt) => {
         rocks = data.rocks;
         uniqueID = data.uniqueID;
         numberOfRocks = rocks.length;
-        updateRocks();
+        updateIntervalID = setInterval(updateRocks, 16);
     }
-    if(data.t == 'SIM'){
-        updateRocks();
+    if(data.t == 'PAUSE'){
+        paused = true;
+    }
+    if(data.t == 'PLAY'){
+        paused = false;
     }
 }
+
 
 function updateRocks() {
-    for (let i = 0; i < numberOfRocks; i++) {
-        rocks[i].ax = 0.0;
-        rocks[i].ay = 0.0;
-        rocks[i].az = 0.0;
-    }
+    if(!paused){
+        tickStart = Date.now();
+        for (let i = 0; i < numberOfRocks; i++) {
+            rocks[i].ax = 0.0;
+            rocks[i].ay = 0.0;
+            rocks[i].az = 0.0;
+        }
 
-    // combine rocks
-    for (let i = 0; i < numberOfRocks; i++) {
-        for (let j = i + 1; j < numberOfRocks; j++) {
-            let dist2 = getDistance2(rocks[i], rocks[j]);
-            if (dist2 <= (rocks[i].r + rocks[j].r) * (rocks[i].r + rocks[j].r)) {
-                rocks[i] = combineRocks(rocks[i], rocks[j]);
-                rocks.splice(j, 1);
-                j--;
-                numberOfRocks--;
+        // combine rocks
+        for (let i = 0; i < numberOfRocks; i++) {
+            for (let j = i + 1; j < numberOfRocks; j++) {
+                let dist2 = getDistance2(rocks[i], rocks[j]);
+                if (dist2 <= (rocks[i].r + rocks[j].r) * (rocks[i].r + rocks[j].r)) {
+                    rocks[i] = combineRocks(rocks[i], rocks[j]);
+                    rocks.splice(j, 1);
+                    j--;
+                    numberOfRocks--;
+                }
             }
         }
-    }
 
-    // Calc acceleration due to gravity
-    for (let i = 0; i < numberOfRocks; i++) {
-        for (let j = i + 1; j < numberOfRocks; j++) {
-            let dist = getDistance(rocks[i], rocks[j]);
-            let distinv = 1 / dist;
-            let vecToRockx = (rocks[j].px - rocks[i].px) * distinv;
-            let vecToRocky = (rocks[j].py - rocks[i].py) * distinv;
-            let vecToRockz = (rocks[j].pz - rocks[i].pz) * distinv;
-            let force = gravityConst * rocks[i].m * rocks[j].m * distinv * distinv;
-            let accela = force / rocks[i].m;
-            let accelb = force / rocks[j].m;
-            rocks[i].ax += vecToRockx * accela;
-            rocks[i].ay += vecToRocky * accela;
-            rocks[i].az += vecToRockz * accela;
-            rocks[j].ax -= vecToRockx * accelb;
-            rocks[j].ay -= vecToRocky * accelb;
-            rocks[j].az -= vecToRockz * accelb;
+        // Calc acceleration due to gravity
+        for (let i = 0; i < numberOfRocks; i++) {
+            for (let j = i + 1; j < numberOfRocks; j++) {
+                let dist = getDistance(rocks[i], rocks[j]);
+                let distinv = 1 / dist;
+                let vecToRockx = (rocks[j].px - rocks[i].px) * distinv;
+                let vecToRocky = (rocks[j].py - rocks[i].py) * distinv;
+                let vecToRockz = (rocks[j].pz - rocks[i].pz) * distinv;
+                let force = gravityConst * rocks[i].m * rocks[j].m * distinv * distinv;
+                let accela = force / rocks[i].m;
+                let accelb = force / rocks[j].m;
+                rocks[i].ax += vecToRockx * accela;
+                rocks[i].ay += vecToRocky * accela;
+                rocks[i].az += vecToRockz * accela;
+                rocks[j].ax -= vecToRockx * accelb;
+                rocks[j].ay -= vecToRocky * accelb;
+                rocks[j].az -= vecToRockz * accelb;
+            }
         }
-    }
 
-    // update physics
-    for (let rock of rocks) {
-        rock.vx += rock.ax / timeFactor;
-        rock.vy += rock.ay / timeFactor;
-        rock.vz += rock.az / timeFactor;
-        rock.px += rock.vx / timeFactor;
-        rock.py += rock.vy / timeFactor;
-        rock.pz += rock.vz / timeFactor;
-    }
+        // update physics
+        for (let rock of rocks) {
+            rock.vx += rock.ax / timeFactor;
+            rock.vy += rock.ay / timeFactor;
+            rock.vz += rock.az / timeFactor;
+            rock.px += rock.vx / timeFactor;
+            rock.py += rock.vy / timeFactor;
+            rock.pz += rock.vz / timeFactor;
+        }
 
-    postMessage(JSON.stringify({rocks: rocks, uniqueID: uniqueID, genID: genID}));
+        postMessage(JSON.stringify({rocks: rocks, uniqueID: uniqueID, genID: genID}));
+    }
 }
+
 
 function combineRocks(a, b) {
     //console.log(a, b);

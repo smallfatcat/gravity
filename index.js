@@ -89,7 +89,7 @@ function reset() {
     rocksSortedY = [];
     rocksSortedZ = [];
     rocks = [];
-    paused = true;
+    pausePlayback();
     numberOfRocks = document.getElementById("startn").value;;
     frameCounter = 0;
     simStart = window.performance.now();
@@ -109,7 +109,7 @@ function reset() {
     initSpecialRocks();
     depthSort();
     sendRocksToWorker();
-    paused = false;
+    resumePlayback();
 }
 
 function initRocks(rockSeed) {
@@ -166,18 +166,16 @@ function initStar(rock) {
 }
 
 function initSpecialRocks() {
-    rocks[1].vx = rocks[0].vx;
-    rocks[1].vy = rocks[0].vy;
-    rocks[1].vz = -10;
-    rocks[1].px = rocks[0].px-100;
-    rocks[1].py = rocks[0].py-100;
-    rocks[1].pz = rocks[0].pz + 1000;
-    rocks[1].m  = rocks[0].m/10;
+    // rocks[1].vx = rocks[0].vx;
+    // rocks[1].vy = rocks[0].vy;
+    // rocks[1].vz = -10;
+    // rocks[1].px = rocks[0].px-100;
+    // rocks[1].py = rocks[0].py-100;
+    // rocks[1].pz = rocks[0].pz + 1000;
+    // rocks[1].m  = rocks[0].m/10;
 }
 
 physicsWorker.onmessage = (evt) => {
-    workerDone = true;
-    
     let data = JSON.parse(evt.data);
     rocks = data.rocks;
     numberOfRocks = rocks.length;
@@ -199,24 +197,21 @@ function depthSort() {
 }
 
 function sendRocksToWorker() {
-    if(workerDone){
-        workerDone = false;
-        workerTime = window.performance.now();
-        physicsWorker.postMessage(JSON.stringify({t: 'UPDATE', rocks: rocks, uniqueID: uniqueID}));
-    }
+    // workerTime = window.performance.now();
+    physicsWorker.postMessage(JSON.stringify({t: 'UPDATE', rocks: rocks, uniqueID: uniqueID}));
 }
 
-function doSim() {
-    if(workerDone){
-        workerDone = false;
-        workerTime = window.performance.now();
-        physicsWorker.postMessage(JSON.stringify({t: 'SIM'}));
-    }
-}
+// function doSim() {
+//     if(workerDone){
+//         workerDone = false;
+//         workerTime = window.performance.now();
+//         physicsWorker.postMessage(JSON.stringify({t: 'SIM'}));
+//     }
+// }
 
 function draw() {
     if (!paused) {
-        doSim();
+        //doSim();
     }
     
     let drawTimeStart = window.performance.now();
@@ -340,13 +335,23 @@ function scaleDn() {
 
 function pauseClick() {
     if (paused) {
-        paused = false;
-        document.getElementById("pause").innerHTML = "Pause";
+        resumePlayback();
     }
     else {
-        paused = true;
-        document.getElementById("pause").innerHTML = "Play";
+        pausePlayback();
     }
+}
+
+function resumePlayback() {
+    paused = false;
+    physicsWorker.postMessage(JSON.stringify({t: 'PLAY'}));
+    document.getElementById("pause").innerHTML = "Pause";
+}
+
+function pausePlayback() {
+    paused = true;
+    physicsWorker.postMessage(JSON.stringify({t: 'PAUSE'}));
+    document.getElementById("pause").innerHTML = "Play";
 }
 
 function canvasClick(evt) {
