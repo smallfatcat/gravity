@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("radius").value = initRadius;
     document.getElementById("solarradius").value = initSolarRadius;
     document.getElementById("solarmass").value = initSolarMass.toExponential();
+    document.getElementById("disctop").value = spawnDiscTop;
+    document.getElementById("discbottom").value = spawnDiscBottom;
     
     requestAnimationFrame(animate);
 });
@@ -32,18 +34,14 @@ const clone = (items) => items.map(item => Array.isArray(item) ? clone(item) : i
 
 let canvasWidth     = 800;
 let canvasHeight    = 800;
-let canvasDepth     = 50;
+let canvasDepth     = 25;
 let canvasBorder    = 100;
 let canvasScale     = 1.0;
 
-let spawnWidth          = 800;
-let spawnHeight         = 400;
-let spawnBorderTop      = 500;
-let spawnBorderBottom   = 100;
-let spawnBorderLeft     = 100;
-let spawnBorderRight    = 100;
-let spawnInnerRadius    = 100;
-let spawnOuterRadius    = 400;
+let spawnDiscTop    = 400;
+let spawnDiscBottom = 400;
+let spawnInnerRadius = 100;
+let spawnOuterRadius = 400;
 
 let timeFactor      = 10;
 let gravityConst    = 6.67e-11;
@@ -86,6 +84,8 @@ function reset() {
     initVelocityZ   = Number(document.getElementById("velz").value);
     initSolarMass   = Number(document.getElementById("solarmass").value);
     initSolarRadius = Number(document.getElementById("solarradius").value);
+    spawnDiscTop    = Number(document.getElementById("disctop").value);
+    spawnDiscBottom = Number(document.getElementById("discbottom").value);
 
     rocks = initRocks(defaultSeed);
     paused = false;
@@ -103,9 +103,9 @@ function initRocks(rockSeed) {
         let randomColor = "rgb(" + getRandomInt(128, 255) + "," + getRandomInt(128, 255) + "," + getRandomInt(128, 255) + ")";
         let rock = {
             id: getNewID(),
-            px: getRandomInt(spawnBorderLeft, spawnWidth - spawnBorderRight),
-            py: getRandomInt(spawnBorderTop, spawnHeight - spawnBorderBottom),
-            pz: getRandomInt(spawnBorderTop, spawnHeight - spawnBorderBottom),
+            px: 0,
+            py: 0,
+            pz: getRandomInt(spawnDiscTop, spawnDiscBottom),
             r: initRadius * (massVariance ** (1 / 3)),
             m: initMass * massVariance,
             vx: 0.0,
@@ -131,12 +131,20 @@ function initRocks(rockSeed) {
     rocks[0].material = MATERIAL_STAR;
     rocks[0].matColor = chroma(237,226,12);
 
+    
     for(let i = 1; i < numberOfRocks; i++){
         getRockInRing(400, 400, spawnInnerRadius, spawnOuterRadius, rocks[i]);
         setVelocityVector(rocks[0], rocks[i], initVelocityXY, LEFT_PANE);
         setVelocityVector(rocks[0], rocks[i], initVelocityZ, RIGHT_PANE);
     }
-
+    
+    rocks[1].vx = rocks[0].vx;
+    rocks[1].vy = rocks[0].vy;
+    rocks[1].vz = -10;
+    rocks[1].px = rocks[0].px-100;
+    rocks[1].py = rocks[0].py-100;
+    rocks[1].pz = rocks[0].pz + 1000;
+    rocks[1].m  = rocks[0].m/10;
     return rocks;
 }
 
