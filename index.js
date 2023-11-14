@@ -31,6 +31,11 @@ const LEFT_PANE  = 0;
 const RIGHT_PANE = 1;
 
 const clone = (items) => items.map(item => Array.isArray(item) ? clone(item) : item);
+const physicsWorker = new Worker("physics.js")
+
+let workerDone = true;
+let workerTime = 0;
+let timeInWorker = 0;
 
 let canvasWidth     = 800;
 let canvasHeight    = 800;
@@ -70,8 +75,10 @@ let defaultSeed = Date.now();
 let rand;
 
 let rocks = initRocks(defaultSeed);
+sendRocksToWorker();
 
 function reset() {
+    paused = true;
     numberOfRocks = document.getElementById("startn").value;;
     frameCounter = 0;
     simStart = window.performance.now();
@@ -88,6 +95,7 @@ function reset() {
     spawnDiscBottom = Number(document.getElementById("discbottom").value);
 
     rocks = initRocks(defaultSeed);
+    sendRocksToWorker();
     paused = false;
 }
 
@@ -145,17 +153,44 @@ function initRocks(rockSeed) {
     rocks[1].py = rocks[0].py-100;
     rocks[1].pz = rocks[0].pz + 1000;
     rocks[1].m  = rocks[0].m/10;
+
     return rocks;
 }
 
-function draw() {
-    let physicsTimeStart = window.performance.now();
-    if (!paused) {
-        frameCounter++;
-        simTime = Math.floor((window.performance.now() - simStart) / 1000);
-        updateRocks();
+physicsWorker.onmessage = (evt) => {
+    workerDone = true;
+    
+    let data = JSON.parse(evt.data);
+    rocks = data.rocks;
+    numberOfRocks = rocks.length;
+    uniqueID = data.uniqueID;
+    frameCounter++;
+    
+    timeInWorker = window.performance.now() - workerTime;
+    simTime = Math.floor((window.performance.now() - simStart) / 1000);
+}
+
+function sendRocksToWorker() {
+    if(workerDone){
+        workerDone = false;
+        workerTime = window.performance.now();
+        physicsWorker.postMessage(JSON.stringify({t: 'UPDATE', rocks: rocks, uniqueID: uniqueID}));
     }
-    let physicsTime = window.performance.now() - physicsTimeStart;
+}
+
+function doSim() {
+    if(workerDone){
+        workerDone = false;
+        workerTime = window.performance.now();
+        physicsWorker.postMessage(JSON.stringify({t: 'SIM'}));
+    }
+}
+
+function draw() {
+    if (!paused) {
+        //updateRocks();
+        doSim();
+    }
     
     let drawTimeStart = window.performance.now();
 
@@ -168,9 +203,9 @@ function draw() {
     drawCanvas("canvasRight", true, rocksSortedY);
     
     let drawTime = window.performance.now() - drawTimeStart;
-    fps = 1000 / (physicsTime + drawTime);
+    fps = 1000 / (timeInWorker + drawTime);
 
-    document.getElementById("status").innerHTML = "Physics Time:" + physicsTime.toFixed(1)
+    document.getElementById("status").innerHTML = "Physics Time:" + timeInWorker.toFixed(1)
         + " Draw Time:" + drawTime.toFixed(1)
         + " FPS:" + fps.toFixed(1)
         + " N:" + rocks.length
@@ -192,7 +227,7 @@ function drawCanvas(canvasId, topView, sortedRocks) {
         for (let rock of sortedRocks) {
             ctx.beginPath();
             ctx.arc(rock.px, topView ? rock.pz : rock.py, rock.r, 0, Math.PI * 2, true);
-            ctx.fillStyle = rock.matColor;
+            ctx.fillStyle = chroma(rock.matColor._rgb[0],rock.matColor._rgb[1],rock.matColor._rgb[2]);
             //ctx.strokeStyle = '#cccccc';
             ctx.fill();
             ctx.stroke();
@@ -294,7 +329,7 @@ function combineRocks(a, b) {
 function setVelocityVector(to, from, velocity, pane) {
     let ox = to.px - from.px;
     let oy = pane == LEFT_PANE ? to.py - from.py : to.pz - from.pz;
-    let r = Math.sqrt(ox*ox+oy*oy);
+    let r = Math.hypot(ox, oy);
     ox = ox / r;
     oy = oy / r;
     velocity *= (gravityConst * to.m / r) ** 0.5;
@@ -328,9 +363,9 @@ function getSphereRadius(volume) {
 }
 
 function getDistance(a, b) {
-    let dist = Math.sqrt((a.px - b.px) * (a.px - b.px) + (a.py - b.py) * (a.py - b.py) + (a.pz - b.pz) * (a.pz - b.pz));
+    let dist = Math.hypot((a.px - b.px), (a.py - b.py), (a.pz - b.pz));
     if (dist < (a.r + b.r)) {
-        dist = (a.r + b.r);
+        dist = a.r + b.r;
     }
     return dist;
 }
@@ -399,7 +434,8 @@ function getClosestRockIndex(x, y, pane){
     let closestIndex = 0;
     for(let i=0; i < numberOfRocks; i++) {
         let opt = pane == LEFT_PANE ? rocks[i].py - y : rocks[i].pz - y;
-        let dist = ((rocks[i].px - x) * (rocks[i].px - x) +  opt * opt)**0.5;
+        // let dist = ((rocks[i].px - x) * (rocks[i].px - x) +  opt * opt)**0.5;
+        let dist = Math.hypot(rocks[i].px - x, opt);
         if (dist < closestDist) {
             closestIndex = i;
             closestDist = dist;
