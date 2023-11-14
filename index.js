@@ -61,7 +61,7 @@ let initSolarMass   = 1e14;
 let initSolarRadius = 10;
 
 
-let numberOfRocks   = 1500;
+let numberOfRocks   = 500;
 let frameCounter    = 0;
 
 let frameTime;
