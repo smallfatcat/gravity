@@ -37,6 +37,9 @@ let workerDone = true;
 let workerTime = 0;
 let timeInWorker = 0;
 
+let rocksSortedZ;
+let rocksSortedY;
+
 let canvasWidth     = 800;
 let canvasHeight    = 800;
 let canvasDepth     = 25;
@@ -75,6 +78,7 @@ let defaultSeed = Date.now();
 let rand;
 
 let rocks = initRocks(defaultSeed);
+depthSort();
 sendRocksToWorker();
 
 function reset() {
@@ -95,6 +99,7 @@ function reset() {
     spawnDiscBottom = Number(document.getElementById("discbottom").value);
 
     rocks = initRocks(defaultSeed);
+    depthSort();
     sendRocksToWorker();
     paused = false;
 }
@@ -165,9 +170,19 @@ physicsWorker.onmessage = (evt) => {
     numberOfRocks = rocks.length;
     uniqueID = data.uniqueID;
     frameCounter++;
+
+    depthSort();
     
     timeInWorker = window.performance.now() - workerTime;
     simTime = Math.floor((window.performance.now() - simStart) / 1000);
+}
+
+function depthSort() {
+    // depth sort for canvas
+    rocksSortedZ = clone(rocks);
+    rocksSortedZ.sort((a, b) => a.pz - b.pz);
+    rocksSortedY = clone(rocks);
+    rocksSortedY.sort((a, b) => a.py - b.py);
 }
 
 function sendRocksToWorker() {
@@ -193,11 +208,6 @@ function draw() {
     }
     
     let drawTimeStart = window.performance.now();
-
-    let rocksSortedZ = clone(rocks);
-    rocksSortedZ.sort((a, b) => a.pz - b.pz);
-    let rocksSortedY = clone(rocks);
-    rocksSortedY.sort((a, b) => a.py - b.py);
 
     drawCanvas("canvasLeft", false, rocksSortedZ);
     drawCanvas("canvasRight", true, rocksSortedY);
