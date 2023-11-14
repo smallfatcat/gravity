@@ -11,6 +11,7 @@ let timeFactor = 10;
 let uniqueID = 0;
 
 let gravityConst    = 6.67e-11;
+let genID = 0;
 
 
 onmessage = (evt) => {
@@ -76,7 +77,7 @@ function updateRocks() {
         rock.pz += rock.vz / timeFactor;
     }
 
-    postMessage(JSON.stringify({rocks: rocks, uniqueID: uniqueID}));
+    postMessage(JSON.stringify({rocks: rocks, uniqueID: uniqueID, genID: genID}));
 }
 
 function combineRocks(a, b) {
