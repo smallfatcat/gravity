@@ -371,13 +371,13 @@ function canvasClick(evt) {
     let canvasLeft = document.getElementById("canvasLeft");
     let canvasRight = document.getElementById("canvasRight");
     if(evt.srcElement.id == 'canvasLeft') {
-        let worldCoordX = (evt.offsetX - (canvasLeft.width / 2) + rocks[0].px) / canvasScale;
-        let worldCoordY = (evt.offsetY - (canvasLeft.height / 2) + rocks[0].py) / canvasScale;
+        let worldCoordX = (evt.offsetX - (canvasLeft.width / 2) ) / canvasScale + rocks[0].px;
+        let worldCoordY = (evt.offsetY - (canvasLeft.height / 2) ) / canvasScale + rocks[0].py;
         selectedRock = getClosestRockID(worldCoordX, worldCoordY, LEFT_PANE);
     }
     if(evt.srcElement.id == 'canvasRight') {
-        let worldCoordX = (evt.offsetX - (canvasRight.width / 2) + rocks[0].px) / canvasScale;
-        let worldCoordZ = (evt.offsetY - (canvasRight.height / 2) + rocks[0].pz) / canvasScale;
+        let worldCoordX = (evt.offsetX - (canvasRight.width / 2)) / canvasScale + rocks[0].px;
+        let worldCoordZ = (evt.offsetY - (canvasRight.height / 2)) / canvasScale + rocks[0].pz;
         selectedRock = getClosestRockID(worldCoordX, worldCoordZ, RIGHT_PANE);
     }
 }
