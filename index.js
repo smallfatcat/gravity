@@ -33,15 +33,12 @@ const RIGHT_PANE = 1;
 const clone = (items) => items.map(item => Array.isArray(item) ? clone(item) : item);
 const physicsWorker = new Worker("physics.js")
 
-let workerDone = true;
-let workerTime = 0;
 let tickDuration = 0;
+let tickDurationInterval = 10;
 
 
 let canvasWidth     = 800;
 let canvasHeight    = 800;
-let canvasDepth     = 25;
-let canvasBorder    = 100;
 let canvasScale     = 1.0;
 
 let spawnDiscTop    = 400;
@@ -49,7 +46,6 @@ let spawnDiscBottom = 400;
 let spawnInnerRadius = 100;
 let spawnOuterRadius = 400;
 
-let timeFactor      = 10;
 let gravityConst    = 6.67e-11;
 
 let uniqueID        = 0;
@@ -65,11 +61,9 @@ let initSolarRadius = 10;
 let numberOfRocks   = 500;
 let frameCounter    = 0;
 
-let frameTime;
 let fps;
 let simTime;
 let simStart = window.performance.now();
-let timestring;
 let paused = false;
 
 let defaultSeed = Date.now();
@@ -77,8 +71,6 @@ let rand;
 
 let rocksSortedZ;
 let rocksSortedY;
-
-let genID = 0;
 
 let rocks = initRocks(defaultSeed);
 initSpecialRocks();
@@ -210,17 +202,23 @@ function draw() {
     drawCanvas("canvasRight", true, rocksSortedY);
     
     let drawTime = window.performance.now() - drawTimeStart;
-    fps = 1000 / (tickDuration + drawTime);
+    fps = 1000 / (tickDuration + drawTime + tickDurationInterval);
+
+    let so = '<span width="20px>"'
 
     document.getElementById("status").innerHTML = 
-    
-        "Physics Time:" + (tickDuration + 10)
-        + " Draw Time:" + drawTime.toFixed(1)
-        + " FPS:"       + fps.toFixed(1)
-        + " N:"         + rocks.length
-        + " Frame:"     + frameCounter
-        + " Time:"      + simTime;
+        debugText("Physics Time:",  (tickDuration + tickDurationInterval),    20)
+        + debugText(" Draw Time:",    drawTime.toFixed(1),                    20)
+        + debugText(" FPS:",          fps.toFixed(1),                         20)
+        + debugText(" N:",            rocks.length,                           20)
+        + debugText(" Frame:",        frameCounter,                           20)
+        + debugText(" Time:",         simTime,                                20)
     document.getElementById("scalelabel").innerHTML = (canvasScale * 100).toFixed(0) + "%";
+}
+
+function debugText(label, value, width) {
+    let retText = label + '<span width="' + width + '">' + value + '</span>';
+    return retText;
 }
 
 function drawCanvas(canvasId, topView, sortedRocks) {
