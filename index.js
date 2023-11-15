@@ -185,7 +185,7 @@ physicsWorker.onmessage = (evt) => {
 function depthSort() {
     // depth sort for canvas
     rocksSortedZ = clone(rocks);
-    rocksSortedZ.sort((a, b) => a.pz - b.pz);
+    rocksSortedZ.sort((a, b) => b.pz - a.pz);
     rocksSortedY = clone(rocks);
     rocksSortedY.sort((a, b) => a.py - b.py);
 }
