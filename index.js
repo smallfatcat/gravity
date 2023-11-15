@@ -35,7 +35,7 @@ const physicsWorker = new Worker("physics.js")
 
 let workerDone = true;
 let workerTime = 0;
-let timeInWorker = 0;
+let tickDuration = 0;
 
 
 let canvasWidth     = 800;
@@ -86,9 +86,9 @@ depthSort();
 sendRocksToWorker();
 
 function reset() {
-    rocksSortedY = [];
-    rocksSortedZ = [];
-    rocks = [];
+    // rocksSortedY = [];
+    // rocksSortedZ = [];
+    // rocks = [];
     pausePlayback();
     numberOfRocks = document.getElementById("startn").value;;
     frameCounter = 0;
@@ -180,11 +180,14 @@ physicsWorker.onmessage = (evt) => {
     rocks = data.rocks;
     numberOfRocks = rocks.length;
     uniqueID = data.uniqueID;
+    tickDuration = data.tickDuration;
+    
     frameCounter++;
 
-    depthSort();
+    // if(!paused){
+        depthSort();
+    // }
     
-    timeInWorker = window.performance.now() - workerTime;
     simTime = Math.floor((window.performance.now() - simStart) / 1000);
 }
 
@@ -197,37 +200,26 @@ function depthSort() {
 }
 
 function sendRocksToWorker() {
-    // workerTime = window.performance.now();
     physicsWorker.postMessage(JSON.stringify({t: 'UPDATE', rocks: rocks, uniqueID: uniqueID}));
 }
 
-// function doSim() {
-//     if(workerDone){
-//         workerDone = false;
-//         workerTime = window.performance.now();
-//         physicsWorker.postMessage(JSON.stringify({t: 'SIM'}));
-//     }
-// }
-
 function draw() {
-    if (!paused) {
-        //doSim();
-    }
-    
     let drawTimeStart = window.performance.now();
 
     drawCanvas("canvasLeft", false, rocksSortedZ);
     drawCanvas("canvasRight", true, rocksSortedY);
     
     let drawTime = window.performance.now() - drawTimeStart;
-    fps = 1000 / (timeInWorker + drawTime);
+    fps = 1000 / (tickDuration + drawTime);
 
-    document.getElementById("status").innerHTML = "Physics Time:" + timeInWorker.toFixed(1)
+    document.getElementById("status").innerHTML = 
+    
+        "Physics Time:" + (tickDuration + 10)
         + " Draw Time:" + drawTime.toFixed(1)
-        + " FPS:" + fps.toFixed(1)
-        + " N:" + rocks.length
-        + " Frame:" + frameCounter
-        + " Time:" + simTime;
+        + " FPS:"       + fps.toFixed(1)
+        + " N:"         + rocks.length
+        + " Frame:"     + frameCounter
+        + " Time:"      + simTime;
     document.getElementById("scalelabel").innerHTML = (canvasScale * 100).toFixed(0) + "%";
 }
 
@@ -288,22 +280,6 @@ function getSphereRadius(volume) {
     let radius = (3*volume/4*Math.PI)**(1/3);
     return radius;
 }
-
-// function getDistance(a, b) {
-//     let dist = Math.hypot((a.px - b.px), (a.py - b.py), (a.pz - b.pz));
-//     if (dist < (a.r + b.r)) {
-//         dist = a.r + b.r;
-//     }
-//     return dist;
-// }
-
-// function getDistance2(a, b) {
-//     let dist2 = (a.px - b.px) * (a.px - b.px) + (a.py - b.py) * (a.py - b.py) + (a.pz - b.pz) * (a.pz - b.pz);
-//     if (dist2 < (a.r + b.r)) {
-//         dist2 = (a.r + b.r) * (a.r + b.r);
-//     }
-//     return dist2;
-// }
 
 function getRandomInt(min, max) {
     min = Math.ceil(min);
