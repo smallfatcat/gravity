@@ -125,7 +125,8 @@ function combineRocks(a, b) {
     //let newColor = chroma.random();
 
     let rock = {
-        id: a.material != MATERIAL_STAR ? getNewID() : 0,
+        // id: a.material != MATERIAL_STAR ? getNewID() : 0,
+        id: a.id,
         px: newx,
         py: newy,
         pz: newz,

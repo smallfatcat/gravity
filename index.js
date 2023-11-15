@@ -39,10 +39,10 @@ let tickDurationInterval = 10;
 
 let canvasWidth     = 800;
 let canvasHeight    = 800;
-let canvasScale     = 1.0;
+let canvasScale     = 0.8;
 
-let spawnDiscTop    = 400;
-let spawnDiscBottom = 400;
+let spawnDiscTop    = -25;
+let spawnDiscBottom = 25;
 let spawnInnerRadius = 100;
 let spawnOuterRadius = 400;
 
@@ -56,6 +56,8 @@ let initRadius      = 1.0;
 let initMass        = 1e7;
 let initSolarMass   = 1e14;
 let initSolarRadius = 10;
+
+let selectedRock = -1;
 
 
 let numberOfRocks   = 500;
@@ -136,7 +138,7 @@ function initRocks(rockSeed) {
     initStar(rocks[0]);
        
     for(let i = 1; i < numberOfRocks; i++){
-        getRockInRing(400, 400, spawnInnerRadius, spawnOuterRadius, rocks[i]);
+        getRockInRing(0, 0, spawnInnerRadius, spawnOuterRadius, rocks[i]);
         setVelocityVector(rocks[0], rocks[i], initVelocityXY, LEFT_PANE);
         setVelocityVector(rocks[0], rocks[i], initVelocityZ, RIGHT_PANE);
     }
@@ -149,10 +151,10 @@ function initStar(rock) {
     rock.r = initSolarRadius;
     rock.vx = 0;
     rock.vy = 0;
-    rock.vz = 0;
-    rock.px = canvasWidth / 2;
-    rock.py = canvasHeight / 2;
-    rock.pz = canvasHeight / 2;
+    rock.vz = 1;
+    rock.px = 0;
+    rock.py = 0;
+    rock.pz = 0;
     rock.material = MATERIAL_STAR;
     rock.matColor = chroma(237,226,12);
 }
@@ -214,6 +216,10 @@ function draw() {
         + debugText(" Frame:",        frameCounter,                           20)
         + debugText(" Time:",         simTime,                                20)
     document.getElementById("scalelabel").innerHTML = (canvasScale * 100).toFixed(0) + "%";
+
+    if(selectedRock != -1){
+        drawRockInfo(selectedRock);
+    }
 }
 
 function debugText(label, value, width) {
@@ -228,8 +234,8 @@ function drawCanvas(canvasId, topView, sortedRocks) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.scale(canvasScale, canvasScale);
         ctx.lineWidth = 1 / canvasScale;
-        ctx.translate(-rocks[0].px + canvasWidth / 2 / canvasScale,
-            -(topView ? rocks[0].pz : rocks[0].py) + canvasHeight / 2 / canvasScale
+        ctx.translate(-rocks[0].px + canvas.width / 2 / canvasScale,
+            -(topView ? rocks[0].pz : rocks[0].py) + canvas.height / 2 / canvasScale
         );
         for (let rock of sortedRocks) {
             ctx.beginPath();
@@ -240,6 +246,23 @@ function drawCanvas(canvasId, topView, sortedRocks) {
             ctx.stroke();
         }
         ctx.setTransform(1, 0, 0, 1, 0, 0);
+    }
+}
+
+function drawRockInfo(rockid){
+    if(rockid != undefined){
+        document.getElementById("rockid").innerHTML = rocks[rockid].id;
+        document.getElementById("rockmass").innerHTML = rocks[rockid].m.toExponential();
+        document.getElementById("rockposx").innerHTML = rocks[rockid].px.toFixed(3);
+        document.getElementById("rockposy").innerHTML = rocks[rockid].py.toFixed(3);
+        document.getElementById("rockposz").innerHTML = rocks[rockid].pz.toFixed(3);
+        document.getElementById("rockvelx").innerHTML = rocks[rockid].vx.toFixed(3);
+        document.getElementById("rockvely").innerHTML = rocks[rockid].vy.toFixed(3);
+        document.getElementById("rockvelz").innerHTML = rocks[rockid].vz.toFixed(3);
+        document.getElementById("rockaccx").innerHTML = rocks[rockid].ax.toFixed(3);
+        document.getElementById("rockaccy").innerHTML = rocks[rockid].ay.toFixed(3);
+        document.getElementById("rockaccz").innerHTML = rocks[rockid].az.toFixed(3);
+        document.getElementById("rockradius").innerHTML = rocks[rockid].r.toFixed(1);
     }
 }
 
@@ -329,14 +352,15 @@ function pausePlayback() {
 }
 
 function canvasClick(evt) {
-    let worldCoordX = ((evt.offsetX - rocks[0].px) / canvasScale) + rocks[0].px;
+    let canvas = document.getElementById("canvasLeft");
+    let worldCoordX = (evt.offsetX - (canvas.width / 2) + rocks[0].px) / canvasScale;
     if(evt.srcElement.id == 'canvasLeft') {
-        let worldCoordY = ((evt.offsetY - rocks[0].py) / canvasScale) + rocks[0].py;
-        console.log(getClosestRockIndex(worldCoordX, worldCoordY, LEFT_PANE));
+        let worldCoordY = (evt.offsetY - (canvas.width / 2) + rocks[0].py) / canvasScale;
+        selectedRock = getClosestRockIndex(worldCoordX, worldCoordY, LEFT_PANE);
     }
     if(evt.srcElement.id == 'canvasRight') {
-        let worldCoordZ = ((evt.offsetY - rocks[0].pz) / canvasScale) + rocks[0].pz;
-        console.log(getClosestRockIndex(worldCoordX, worldCoordZ, RIGHT_PANE));
+        let worldCoordZ = (evt.offsetY - (canvas.width / 2) + rocks[0].pz) / canvasScale;
+        selectedRock = getClosestRockIndex(worldCoordX, worldCoordZ, RIGHT_PANE);
     }
 }
 
@@ -352,7 +376,7 @@ function getClosestRockIndex(x, y, pane){
             closestDist = dist;
         }
     }
-    return rocks[closestIndex];
+    return closestIndex;
 }
 
 function getNewID() {
