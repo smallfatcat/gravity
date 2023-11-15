@@ -25,7 +25,7 @@ onmessage = (evt) => {
     let data = JSON.parse(evt.data);
     if(data.t == 'UPDATE'){
         rocks = data.rocks;
-        uniqueID = data.uniqueID;
+        uniqueID = 0;
         numberOfRocks = rocks.length;
         // updateIntervalID = setInterval(updateRocks, 16);
         throttleUpdates();
@@ -126,7 +126,7 @@ function combineRocks(a, b) {
 
     let rock = {
         // id: a.material != MATERIAL_STAR ? getNewID() : 0,
-        id: a.id,
+        id: a.m >= b.m ? a.id : b.id,
         px: newx,
         py: newy,
         pz: newz,

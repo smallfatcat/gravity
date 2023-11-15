@@ -36,9 +36,6 @@ const physicsWorker = new Worker("physics.js")
 let tickDuration = 0;
 let tickDurationInterval = 10;
 
-
-let canvasWidth     = 800;
-let canvasHeight    = 800;
 let canvasScale     = 0.8;
 
 let spawnDiscTop    = -25;
@@ -160,13 +157,13 @@ function initStar(rock) {
 }
 
 function initSpecialRocks() {
-    // rocks[1].vx = rocks[0].vx;
-    // rocks[1].vy = rocks[0].vy;
-    // rocks[1].vz = -10;
-    // rocks[1].px = rocks[0].px-100;
-    // rocks[1].py = rocks[0].py-100;
-    // rocks[1].pz = rocks[0].pz + 1000;
-    // rocks[1].m  = rocks[0].m/10;
+    rocks[1].vx = rocks[0].vx;
+    rocks[1].vy = rocks[0].vy;
+    rocks[1].vz = -10;
+    rocks[1].px = rocks[0].px+450;
+    rocks[1].py = rocks[0].py-100;
+    rocks[1].pz = rocks[0].pz + 1000;
+    rocks[1].m  = rocks[0].m/10;
 }
 
 physicsWorker.onmessage = (evt) => {
@@ -249,20 +246,39 @@ function drawCanvas(canvasId, topView, sortedRocks) {
     }
 }
 
-function drawRockInfo(rockid){
-    if(rockid != undefined){
-        document.getElementById("rockid").innerHTML = rocks[rockid].id;
-        document.getElementById("rockmass").innerHTML = rocks[rockid].m.toExponential();
-        document.getElementById("rockposx").innerHTML = rocks[rockid].px.toFixed(3);
-        document.getElementById("rockposy").innerHTML = rocks[rockid].py.toFixed(3);
-        document.getElementById("rockposz").innerHTML = rocks[rockid].pz.toFixed(3);
-        document.getElementById("rockvelx").innerHTML = rocks[rockid].vx.toFixed(3);
-        document.getElementById("rockvely").innerHTML = rocks[rockid].vy.toFixed(3);
-        document.getElementById("rockvelz").innerHTML = rocks[rockid].vz.toFixed(3);
-        document.getElementById("rockaccx").innerHTML = rocks[rockid].ax.toFixed(3);
-        document.getElementById("rockaccy").innerHTML = rocks[rockid].ay.toFixed(3);
-        document.getElementById("rockaccz").innerHTML = rocks[rockid].az.toFixed(3);
-        document.getElementById("rockradius").innerHTML = rocks[rockid].r.toFixed(1);
+function drawRockInfo(rockID){
+    let ff = (element) => rockID == element.id;
+    let rockIndex = rocks.findIndex(ff);
+    if(rockID != undefined && rockIndex != -1){
+
+        document.getElementById("srock").hidden         = false;
+        document.getElementById("rockid").innerHTML     = rocks[rockIndex].id;
+        document.getElementById("rockmass").innerHTML   = rocks[rockIndex].m.toExponential();
+        document.getElementById("rockposx").innerHTML   = rocks[rockIndex].px.toFixed(3);
+        document.getElementById("rockposy").innerHTML   = rocks[rockIndex].py.toFixed(3);
+        document.getElementById("rockposz").innerHTML   = rocks[rockIndex].pz.toFixed(3);
+        document.getElementById("rockvelx").innerHTML   = rocks[rockIndex].vx.toFixed(3);
+        document.getElementById("rockvely").innerHTML   = rocks[rockIndex].vy.toFixed(3);
+        document.getElementById("rockvelz").innerHTML   = rocks[rockIndex].vz.toFixed(3);
+        document.getElementById("rockaccx").innerHTML   = rocks[rockIndex].ax.toFixed(3);
+        document.getElementById("rockaccy").innerHTML   = rocks[rockIndex].ay.toFixed(3);
+        document.getElementById("rockaccz").innerHTML   = rocks[rockIndex].az.toFixed(3);
+        document.getElementById("rockradius").innerHTML = rocks[rockIndex].r.toFixed(1);
+    }
+    else{
+        document.getElementById("srock").hidden         = true;
+        document.getElementById("rockid").innerHTML     = "";
+        document.getElementById("rockmass").innerHTML   = "";
+        document.getElementById("rockposx").innerHTML   = "";
+        document.getElementById("rockposy").innerHTML   = "";
+        document.getElementById("rockposz").innerHTML   = "";
+        document.getElementById("rockvelx").innerHTML   = "";
+        document.getElementById("rockvely").innerHTML   = "";
+        document.getElementById("rockvelz").innerHTML   = "";
+        document.getElementById("rockaccx").innerHTML   = "";
+        document.getElementById("rockaccy").innerHTML   = "";
+        document.getElementById("rockaccz").innerHTML   = "";
+        document.getElementById("rockradius").innerHTML = "";
     }
 }
 
@@ -352,31 +368,33 @@ function pausePlayback() {
 }
 
 function canvasClick(evt) {
-    let canvas = document.getElementById("canvasLeft");
-    let worldCoordX = (evt.offsetX - (canvas.width / 2) + rocks[0].px) / canvasScale;
+    let canvasLeft = document.getElementById("canvasLeft");
+    let canvasRight = document.getElementById("canvasRight");
     if(evt.srcElement.id == 'canvasLeft') {
-        let worldCoordY = (evt.offsetY - (canvas.width / 2) + rocks[0].py) / canvasScale;
-        selectedRock = getClosestRockIndex(worldCoordX, worldCoordY, LEFT_PANE);
+        let worldCoordX = (evt.offsetX - (canvasLeft.width / 2) + rocks[0].px) / canvasScale;
+        let worldCoordY = (evt.offsetY - (canvasLeft.height / 2) + rocks[0].py) / canvasScale;
+        selectedRock = getClosestRockID(worldCoordX, worldCoordY, LEFT_PANE);
     }
     if(evt.srcElement.id == 'canvasRight') {
-        let worldCoordZ = (evt.offsetY - (canvas.width / 2) + rocks[0].pz) / canvasScale;
-        selectedRock = getClosestRockIndex(worldCoordX, worldCoordZ, RIGHT_PANE);
+        let worldCoordX = (evt.offsetX - (canvasRight.width / 2) + rocks[0].px) / canvasScale;
+        let worldCoordZ = (evt.offsetY - (canvasRight.height / 2) + rocks[0].pz) / canvasScale;
+        selectedRock = getClosestRockID(worldCoordX, worldCoordZ, RIGHT_PANE);
     }
 }
 
-function getClosestRockIndex(x, y, pane){
+function getClosestRockID(x, y, pane){
     let closestDist = Infinity;
-    let closestIndex = 0;
+    let closestId = -1;
     for(let i=0; i < numberOfRocks; i++) {
         let opt = pane == LEFT_PANE ? rocks[i].py - y : rocks[i].pz - y;
         // let dist = ((rocks[i].px - x) * (rocks[i].px - x) +  opt * opt)**0.5;
         let dist = Math.hypot(rocks[i].px - x, opt);
         if (dist < closestDist) {
-            closestIndex = i;
+            closestId = rocks[i].id;
             closestDist = dist;
         }
     }
-    return closestIndex;
+    return closestId;
 }
 
 function getNewID() {
