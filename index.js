@@ -227,6 +227,9 @@ function debugText(label, value, width) {
 }
 
 function drawCanvas(canvasId, topView, sortedRocks) {
+    let ff = (element) => selectedRock == element.id;
+    let rockIndex = rocks.findIndex(ff);
+    
     const canvas = document.getElementById(canvasId);
     if (canvasLeft.getContext) {
         const ctx = canvas.getContext("2d");
@@ -234,7 +237,7 @@ function drawCanvas(canvasId, topView, sortedRocks) {
         ctx.scale(canvasScale, canvasScale);
         ctx.lineWidth = 1 / canvasScale;
         ctx.translate(-rocks[0].px + canvas.width / 2 / canvasScale,
-            -(topView ? rocks[0].pz : rocks[0].py) + canvas.height / 2 / canvasScale
+        -(topView ? rocks[0].pz : rocks[0].py) + canvas.height / 2 / canvasScale
         );
         for (let rock of sortedRocks) {
             ctx.beginPath();
@@ -242,6 +245,13 @@ function drawCanvas(canvasId, topView, sortedRocks) {
             ctx.fillStyle = chroma(rock.matColor._rgb[0],rock.matColor._rgb[1],rock.matColor._rgb[2]);
             //ctx.strokeStyle = '#cccccc';
             ctx.fill();
+            ctx.stroke();
+        }
+        if(selectedRock != undefined && rockIndex != -1){
+            let r = rocks[rockIndex].r + 4;
+            let w = r * 2;
+            ctx.beginPath();
+            ctx.rect(rocks[rockIndex].px - r, (topView ? rocks[rockIndex].pz : rocks[rockIndex].py) - r, w, w);
             ctx.stroke();
         }
         ctx.setTransform(1, 0, 0, 1, 0, 0);

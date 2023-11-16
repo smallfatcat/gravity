@@ -4,64 +4,39 @@ body{
     /* background-color: rgb(44, 44, 44); */
 }
 
-#startn{
-    width: 50px;
-}
-
-#seed{
-    width: 100px;
-}
-
 .buttons{
     font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
 }
 
-#pause{
+.w25{
+    width: 25px;
+}
+
+.w50{
     width: 50px;
 }
 
-#reset{
-    width: 50px;
-}
-
-#mass{
+.w100{
     width: 100px;
 }
 
-#massv{
-    width: 25px;
-}
-
-#vel{
-    width: 25px;
-}
-
-#velz{
-    width: 25px;
-}
-
-#radius{
-    width: 25px;
-}
-#disctop{
-    width: 25px;
-}
-#discbottom{
-    width: 25px;
-}
-#solarradius{
-    width: 25px;
-}
-#solarmass{
-    width: 100px;
-}
-div.s1{
+.s1{
     position: fixed;
-    font-size: 10px;
+    font-size: 12px;
     top: 100px;
-    left: 800px;
+    left: 600px;
 }
-td.coords{
-    width: 10px;
+
+.coords{
     text-align: right;
+}
+
+.column{
+    width: 50px;
+    text-align: left;
+}
+
+.t1{
+    table-layout: fixed;
+
 }
