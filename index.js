@@ -72,7 +72,7 @@ let rocksSortedZ;
 let rocksSortedY;
 
 let rocks = initRocks(defaultSeed);
-initSpecialRocks();
+// initSpecialRocks();
 depthSort();
 sendRocksToWorker();
 
@@ -97,7 +97,7 @@ function reset() {
     spawnDiscBottom = Number(document.getElementById("discbottom").value);
 
     rocks = initRocks(defaultSeed);
-    initSpecialRocks();
+    // initSpecialRocks();
     depthSort();
     sendRocksToWorker();
     resumePlayback();
@@ -133,12 +133,21 @@ function initRocks(rockSeed) {
     }
 
     initStar(rocks[0]);
+    // initSpecialRocks(rocks[1], rocks[0])
        
-    for(let i = 1; i < numberOfRocks; i++){
+    for(let i = 2; i < numberOfRocks; i++){
         getRockInRing(0, 0, spawnInnerRadius, spawnOuterRadius, rocks[i]);
         setVelocityVector(rocks[0], rocks[i], initVelocityXY, LEFT_PANE);
         setVelocityVector(rocks[0], rocks[i], initVelocityZ, RIGHT_PANE);
     }
+
+    // for(let i = numberOfRocks/2; i < numberOfRocks; i++){
+    //     rocks[i].pz = getRandomInt(spawnDiscTop + rocks[1].pz, spawnDiscBottom + rocks[1].pz);
+    //     getRockInRing(rocks[1].px, rocks[1].py, spawnInnerRadius, spawnOuterRadius, rocks[i]);
+    //     setVelocityVector(rocks[1], rocks[i], initVelocityXY, LEFT_PANE);
+    //     setVelocityVector(rocks[1], rocks[i], initVelocityZ, RIGHT_PANE);
+    //     rocks[i].vz = rocks[1].vz;
+    // }
 
     return rocks;
 }
@@ -148,7 +157,7 @@ function initStar(rock) {
     rock.r = initSolarRadius;
     rock.vx = 0;
     rock.vy = 0;
-    rock.vz = 1;
+    rock.vz = 0;
     rock.px = 0;
     rock.py = 0;
     rock.pz = 0;
@@ -156,16 +165,17 @@ function initStar(rock) {
     rock.matColor = chroma(237,226,12);
 }
 
-function initSpecialRocks() {
-    rocks[1].vx = rocks[0].vx;
-    rocks[1].vy = rocks[0].vy;
-    rocks[1].vz = -10;
-    rocks[1].px = rocks[0].px+450;
-    rocks[1].py = rocks[0].py-100;
-    rocks[1].pz = rocks[0].pz + 1000;
-    rocks[1].m  = rocks[0].m/10;
-    rocks[1].r  = 10;
-    rocks[1].matColor  = chroma(237,226,12);
+function initSpecialRocks(rock, star) {
+    rock.vx = star.vx + 0.5;
+    rock.vy = star.vy;
+    rock.vz = -4;
+    rock.px = star.px+100;
+    rock.py = star.py-100;
+    rock.pz = star.pz + 1000;
+    rock.m  = star.m/1;
+    rock.r  = 10;
+    rock.material = MATERIAL_STAR;
+    rock.matColor  = chroma(237,226,12);
 }
 
 physicsWorker.onmessage = (evt) => {
