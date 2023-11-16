@@ -36,7 +36,7 @@ const physicsWorker = new Worker("physics.js")
 let tickDuration = 0;
 let tickDurationInterval = 10;
 
-let canvasScale     = 0.8;
+let canvasScale     = 0.6;
 
 let spawnDiscTop    = -25;
 let spawnDiscBottom = 25;
@@ -49,7 +49,7 @@ let uniqueID        = 0;
 let initVelocityXY  = 1;
 let initVelocityZ   = 0;
 let initMassVar     = 30;
-let initRadius      = 1.0;
+let initRadius      = 2.0;
 let initMass        = 1e7;
 let initSolarMass   = 1e14;
 let initSolarRadius = 10;
@@ -164,6 +164,8 @@ function initSpecialRocks() {
     rocks[1].py = rocks[0].py-100;
     rocks[1].pz = rocks[0].pz + 1000;
     rocks[1].m  = rocks[0].m/10;
+    rocks[1].r  = 10;
+    rocks[1].matColor  = chroma(237,226,12);
 }
 
 physicsWorker.onmessage = (evt) => {
@@ -316,6 +318,14 @@ function getSphereVolume(radius) {
 function getSphereRadius(volume) {
     let radius = (3*volume/4*Math.PI)**(1/3);
     return radius;
+}
+
+function crossProduct(a, b,) {
+    let crossProduct = []
+    crossProduct[0] = a[1] * b[2]- a[2] * b[1];
+    crossProduct[1] = a[2] * b[0]- a[0] * b[2];
+    crossProduct[2] = a[0] * b[1]- a[1] * b[0];
+    return crossProduct;
 }
 
 function getRandomInt(min, max) {
