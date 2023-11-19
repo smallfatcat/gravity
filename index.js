@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("scaledn").addEventListener("click", scaleDn);
     document.getElementById("pause").addEventListener("click", pauseClick);
     document.getElementById("reset").addEventListener("click", reset);
+    document.getElementById("focus").addEventListener("click", focusClick);
     document.getElementById("canvasLeft").addEventListener("click", canvasClick);
     document.getElementById("canvasRight").addEventListener("click", canvasClick);
     document.getElementById("seed").value = defaultSeed;
@@ -71,6 +72,7 @@ let rand;
 
 let rocksSortedZ;
 let rocksSortedY;
+let focusActive = false;
 
 let rocks = initRocks(defaultSeed);
 // initSpecialRocks();
@@ -247,8 +249,12 @@ function drawCanvas(canvasId, topView, sortedRocks) {
         ctx.lineWidth = 1 / canvasScale;
 
         ctx.scale(canvasScale, canvasScale);
-        ctx.translate(-focus.x + canvas.width / 2 / canvasScale, -(topView ? focus.z : focus.y) + canvas.height / 2 / canvasScale);
-
+        if(focusActive) {
+            ctx.translate(-focus.x + canvas.width / 2 / canvasScale, -(topView ? focus.z : focus.y) + canvas.height / 2 / canvasScale);
+        }
+        else {
+            ctx.translate(-rocks[0].px + canvas.width / 2 / canvasScale, -(topView ? rocks[0].pz : rocks[0].py) + canvas.height / 2 / canvasScale);
+        }
         for (let rock of sortedRocks) {
             ctx.beginPath();
             ctx.arc(rock.px, topView ? rock.pz : rock.py, rock.r, 0, Math.PI * 2, true);
@@ -397,6 +403,17 @@ function pauseClick() {
     }
 }
 
+function focusClick() {
+    if (focusActive) {
+        focusActive = false;
+        document.getElementById("focus").innerHTML = "Focus";
+    }
+    else {
+        focusActive = true;
+        document.getElementById("focus").innerHTML = "Unfocus";
+    }
+}
+
 function resumePlayback() {
     paused = false;
     physicsWorker.postMessage(JSON.stringify({t: 'PLAY'}));
@@ -436,13 +453,13 @@ function canvasClick(evt) {
     let focus = getFocus();
 
     if(evt.srcElement.id == 'canvasLeft') {
-        let worldCoordX = (evt.offsetX - (canvasLeft.width / 2) ) / canvasScale + focus.x;
-        let worldCoordY = (evt.offsetY - (canvasLeft.height / 2) ) / canvasScale + focus.y;
+        let worldCoordX = (evt.offsetX - (canvasLeft.width / 2) ) / canvasScale + (focusActive ? focus.x : rocks[0].px);
+        let worldCoordY = (evt.offsetY - (canvasLeft.height / 2) ) / canvasScale + (focusActive ? focus.y : rocks[0].py);
         selectedRock = getClosestRockID(worldCoordX, worldCoordY, LEFT_PANE);
     }
     if(evt.srcElement.id == 'canvasRight') {
-        let worldCoordX = (evt.offsetX - (canvasRight.width / 2)) / canvasScale + focus.x;
-        let worldCoordZ = (evt.offsetY - (canvasRight.height / 2)) / canvasScale + focus.z;
+        let worldCoordX = (evt.offsetX - (canvasRight.width / 2)) / canvasScale + (focusActive ? focus.x : rocks[0].px);
+        let worldCoordZ = (evt.offsetY - (canvasRight.height / 2)) / canvasScale + (focusActive ? focus.z : rocks[0].pz);
         selectedRock = getClosestRockID(worldCoordX, worldCoordZ, RIGHT_PANE);
     }
 }
