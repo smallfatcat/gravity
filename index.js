@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("solarmass").value = initSolarMass.toExponential();
     document.getElementById("disctop").value = spawnDiscTop;
     document.getElementById("discbottom").value = spawnDiscBottom;
+    document.getElementById("srock").hidden = true;
     
     requestAnimationFrame(animate);
 });
@@ -237,18 +238,15 @@ function debugText(label, value, width) {
 }
 
 function drawCanvas(canvasId, topView, sortedRocks) {
-    let ff = (element) => selectedRock == element.id;
-    let rockIndex = rocks.findIndex(ff);
-    
+    let focus = getFocus();
+
     const canvas = document.getElementById(canvasId);
     if (canvasLeft.getContext) {
         const ctx = canvas.getContext("2d");
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.scale(canvasScale, canvasScale);
         ctx.lineWidth = 1 / canvasScale;
-        ctx.translate(-rocks[0].px + canvas.width / 2 / canvasScale,
-        -(topView ? rocks[0].pz : rocks[0].py) + canvas.height / 2 / canvasScale
-        );
+        ctx.translate(-focus.x + canvas.width / 2 / canvasScale, -(topView ? focus.z : focus.y) + canvas.height / 2 / canvasScale);
         for (let rock of sortedRocks) {
             ctx.beginPath();
             ctx.arc(rock.px, topView ? rock.pz : rock.py, rock.r, 0, Math.PI * 2, true);
@@ -257,11 +255,11 @@ function drawCanvas(canvasId, topView, sortedRocks) {
             ctx.fill();
             ctx.stroke();
         }
-        if(selectedRock != undefined && rockIndex != -1){
-            let r = rocks[rockIndex].r + 4;
+        if(selectedRock != undefined){
+            let r = focus.r + 4;
             let w = r * 2;
             ctx.beginPath();
-            ctx.rect(rocks[rockIndex].px - r, (topView ? rocks[rockIndex].pz : rocks[rockIndex].py) - r, w, w);
+            ctx.rect(focus.x - r, (topView ? focus.z : focus.y) - r, w, w);
             ctx.stroke();
         }
         ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -270,22 +268,25 @@ function drawCanvas(canvasId, topView, sortedRocks) {
 
 function drawRockInfo(rockID){
     let ff = (element) => rockID == element.id;
-    let rockIndex = rocks.findIndex(ff);
-    if(rockID != undefined && rockIndex != -1){
+    let ri = rocks.findIndex(ff);
+    if(rockID != undefined && ri != -1){
 
         document.getElementById("srock").hidden         = false;
-        document.getElementById("rockid").innerHTML     = rocks[rockIndex].id;
-        document.getElementById("rockmass").innerHTML   = rocks[rockIndex].m.toExponential();
-        document.getElementById("rockposx").innerHTML   = rocks[rockIndex].px.toFixed(3);
-        document.getElementById("rockposy").innerHTML   = rocks[rockIndex].py.toFixed(3);
-        document.getElementById("rockposz").innerHTML   = rocks[rockIndex].pz.toFixed(3);
-        document.getElementById("rockvelx").innerHTML   = rocks[rockIndex].vx.toFixed(3);
-        document.getElementById("rockvely").innerHTML   = rocks[rockIndex].vy.toFixed(3);
-        document.getElementById("rockvelz").innerHTML   = rocks[rockIndex].vz.toFixed(3);
-        document.getElementById("rockaccx").innerHTML   = rocks[rockIndex].ax.toFixed(3);
-        document.getElementById("rockaccy").innerHTML   = rocks[rockIndex].ay.toFixed(3);
-        document.getElementById("rockaccz").innerHTML   = rocks[rockIndex].az.toFixed(3);
-        document.getElementById("rockradius").innerHTML = rocks[rockIndex].r.toFixed(1);
+        document.getElementById("rockid").innerHTML     = rocks[ri].id;
+        document.getElementById("rockmass").innerHTML   = rocks[ri].m.toExponential();
+        document.getElementById("rockposx").innerHTML   = rocks[ri].px.toFixed(3);
+        document.getElementById("rockposy").innerHTML   = rocks[ri].py.toFixed(3);
+        document.getElementById("rockposz").innerHTML   = rocks[ri].pz.toFixed(3);
+        document.getElementById("rockposmag").innerHTML = Math.hypot(rocks[0].px - rocks[ri].px, rocks[0].py - rocks[ri].py, rocks[0].pz - rocks[ri].pz).toFixed(3);
+        document.getElementById("rockvelx").innerHTML   = rocks[ri].vx.toFixed(3);
+        document.getElementById("rockvely").innerHTML   = rocks[ri].vy.toFixed(3);
+        document.getElementById("rockvelz").innerHTML   = rocks[ri].vz.toFixed(3);
+        document.getElementById("rockvelmag").innerHTML = Math.hypot(rocks[ri].vx, rocks[ri].vy, rocks[ri].vz).toFixed(3);
+        document.getElementById("rockaccx").innerHTML   = rocks[ri].ax.toFixed(3);
+        document.getElementById("rockaccy").innerHTML   = rocks[ri].ay.toFixed(3);
+        document.getElementById("rockaccz").innerHTML   = rocks[ri].az.toFixed(3);
+        document.getElementById("rockaccmag").innerHTML = Math.hypot(rocks[ri].ax, rocks[ri].ay, rocks[ri].az).toFixed(3);
+        document.getElementById("rockradius").innerHTML = rocks[ri].r.toFixed(1);
     }
     else{
         document.getElementById("srock").hidden         = true;
@@ -297,9 +298,11 @@ function drawRockInfo(rockID){
         document.getElementById("rockvelx").innerHTML   = "";
         document.getElementById("rockvely").innerHTML   = "";
         document.getElementById("rockvelz").innerHTML   = "";
+        document.getElementById("rockvelmag").innerHTML = "";
         document.getElementById("rockaccx").innerHTML   = "";
         document.getElementById("rockaccy").innerHTML   = "";
         document.getElementById("rockaccz").innerHTML   = "";
+        document.getElementById("rockaccmag").innerHTML = "";
         document.getElementById("rockradius").innerHTML = "";
     }
 }
@@ -397,17 +400,40 @@ function pausePlayback() {
     document.getElementById("pause").innerHTML = "Play";
 }
 
+function getFocus() {
+    let ff = (element) => selectedRock == element.id;
+    let ri = rocks.findIndex(ff);
+
+    let focus = {};
+    if(selectedRock != undefined && ri != -1){
+        focus.x = rocks[ri].px;
+        focus.y = rocks[ri].py;
+        focus.z = rocks[ri].pz;
+        focus.r = rocks[ri].r;
+    }
+    else{
+        focus.x = rocks[0].px;
+        focus.y = rocks[0].py;
+        focus.z = rocks[0].pz;
+        focus.r = rocks[0].r;
+    }
+    return focus;
+}
+
 function canvasClick(evt) {
     let canvasLeft = document.getElementById("canvasLeft");
     let canvasRight = document.getElementById("canvasRight");
+
+    let focus = getFocus();
+
     if(evt.srcElement.id == 'canvasLeft') {
-        let worldCoordX = (evt.offsetX - (canvasLeft.width / 2) ) / canvasScale + rocks[0].px;
-        let worldCoordY = (evt.offsetY - (canvasLeft.height / 2) ) / canvasScale + rocks[0].py;
+        let worldCoordX = (evt.offsetX - (canvasLeft.width / 2) ) / canvasScale + focus.x;
+        let worldCoordY = (evt.offsetY - (canvasLeft.height / 2) ) / canvasScale + focus.y;
         selectedRock = getClosestRockID(worldCoordX, worldCoordY, LEFT_PANE);
     }
     if(evt.srcElement.id == 'canvasRight') {
-        let worldCoordX = (evt.offsetX - (canvasRight.width / 2)) / canvasScale + rocks[0].px;
-        let worldCoordZ = (evt.offsetY - (canvasRight.height / 2)) / canvasScale + rocks[0].pz;
+        let worldCoordX = (evt.offsetX - (canvasRight.width / 2)) / canvasScale + focus.x;
+        let worldCoordZ = (evt.offsetY - (canvasRight.height / 2)) / canvasScale + focus.z;
         selectedRock = getClosestRockID(worldCoordX, worldCoordZ, RIGHT_PANE);
     }
 }

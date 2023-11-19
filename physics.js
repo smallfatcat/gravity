@@ -110,9 +110,9 @@ function combineRocks(a, b) {
     let newVolume = volumea + volumeb;
     let newr = a.material != MATERIAL_STAR ? (newVolume * 3 / (4 * Math.PI)) ** (1 / 3) : a.r;
 
-    let newx = (a.px * a.m + b.px * b.m) / ((a.m + b.m));
-    let newy = (a.py * a.m + b.py * b.m) / ((a.m + b.m));
-    let newz = (a.pz * a.m + b.pz * b.m) / ((a.m + b.m));
+    // let newx = (a.px * a.m + b.px * b.m) / ((a.m + b.m));
+    // let newy = (a.py * a.m + b.py * b.m) / ((a.m + b.m));
+    // let newz = (a.pz * a.m + b.pz * b.m) / ((a.m + b.m));
 
     let newvx = (a.vx * a.m + b.vx * b.m) / newm;
     let newvy = (a.vy * a.m + b.vy * b.m) / newm;
@@ -122,14 +122,12 @@ function combineRocks(a, b) {
 
     let colors = [chroma(a.matColor._rgb[0],a.matColor._rgb[1],a.matColor._rgb[2]), chroma(b.matColor._rgb[0],b.matColor._rgb[1],b.matColor._rgb[2])];
     let newColor = chroma.average(colors, 'lch', [volumea/newVolume, volumeb/newVolume]);
-    //let newColor = chroma.random();
 
     let rock = {
-        // id: a.material != MATERIAL_STAR ? getNewID() : 0,
         id: a.m >= b.m ? a.id : b.id,
-        px: newx,
-        py: newy,
-        pz: newz,
+        px: a.m >= b.m ? a.px : b.px,
+        py: a.m >= b.m ? a.py : b.py,
+        pz: a.m >= b.m ? a.pz : b.pz,
         vx: newvx,
         vy: newvy,
         vz: newvz,
