@@ -244,9 +244,11 @@ function drawCanvas(canvasId, topView, sortedRocks) {
     if (canvasLeft.getContext) {
         const ctx = canvas.getContext("2d");
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.scale(canvasScale, canvasScale);
         ctx.lineWidth = 1 / canvasScale;
+
+        ctx.scale(canvasScale, canvasScale);
         ctx.translate(-focus.x + canvas.width / 2 / canvasScale, -(topView ? focus.z : focus.y) + canvas.height / 2 / canvasScale);
+
         for (let rock of sortedRocks) {
             ctx.beginPath();
             ctx.arc(rock.px, topView ? rock.pz : rock.py, rock.r, 0, Math.PI * 2, true);
@@ -264,6 +266,13 @@ function drawCanvas(canvasId, topView, sortedRocks) {
         }
         ctx.setTransform(1, 0, 0, 1, 0, 0);
     }
+}
+
+function getAngle(focus, topView) {
+    let x = focus.x - rocks[0].px;
+    let y = topView ? focus.z - rocks[0].pz : focus.y - rocks[0].py;
+    let angle = Math.atan2(y, x);
+    return angle;
 }
 
 function drawRockInfo(rockID){
