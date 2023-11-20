@@ -30,7 +30,6 @@ onmessage = (evt) => {
         uniqueID = 0;
         numberOfRocks = rocks.length;
         updateNumber = data.u;
-        // updateIntervalID = setInterval(updateRocks, 16);
         throttleUpdates();
     }
     if(data.t == 'PAUSE'){
