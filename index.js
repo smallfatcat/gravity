@@ -73,10 +73,11 @@ let rand;
 let rocksSortedZ;
 let rocksSortedY;
 let focusActive = false;
-let posHistorySize = 10000;
-let posHistory = [];
+let rockHistory = [];
+let maxHistory = 5000;
 
 let rocks = initRocks(defaultSeed);
+initRockHistory();
 // initSpecialRocks();
 depthSort();
 sendRocksToWorker();
@@ -86,7 +87,6 @@ function reset() {
     // rocksSortedZ = [];
     // rocks = [];
     pausePlayback();
-    posHistory = [];
     numberOfRocks = document.getElementById("startn").value;;
     frameCounter = 0;
     simStart = window.performance.now();
@@ -103,6 +103,7 @@ function reset() {
     spawnDiscBottom = Number(document.getElementById("discbottom").value);
 
     rocks = initRocks(defaultSeed);
+    initRockHistory();
     // initSpecialRocks();
     depthSort();
     sendRocksToWorker();
@@ -184,12 +185,35 @@ function initSpecialRocks(rock, star) {
     rock.matColor  = chroma(237,226,12);
 }
 
+function initRockHistory() {
+    rockHistory = [];
+    for(let i=0;i<(numberOfRocks+1);i++) {
+        let pos = [];
+        rockHistory.push(pos);
+    }
+}
+
+function storeRockHistory() {
+    for(let i=0;i<numberOfRocks;i++) {
+        //console.log(rocks[i]);
+        let pos = {};
+        pos.x = rocks[i].px;
+        pos.y = rocks[i].py;
+        pos.z = rocks[i].pz;
+        if(rockHistory[rocks[i].id].length > maxHistory){
+            rockHistory[rocks[i].id].shift();
+        }
+        rockHistory[rocks[i].id].push(pos);
+    }
+}
+
 physicsWorker.onmessage = (evt) => {
     let data = JSON.parse(evt.data);
-    if(posHistory.length == posHistorySize){
-        posHistory.shift();
-    }
-    posHistory.push(getTrailData());
+    // if(posHistory.length == posHistorySize){
+    //     posHistory.shift();
+    // }
+    // posHistory.push(getTrailData());
+    storeRockHistory();
     rocks = data.rocks;
     numberOfRocks = rocks.length;
     uniqueID = data.uniqueID;
@@ -202,19 +226,6 @@ physicsWorker.onmessage = (evt) => {
     // }
     
     simTime = Math.floor((window.performance.now() - simStart) / 1000);
-}
-
-function getTrailData() {
-    let posData = [];
-    for(let i=0;i<numberOfRocks;i++){
-        let pos = {};
-        pos.id = rocks[i].id;
-        pos.x = rocks[i].px;
-        pos.y = rocks[i].py;
-        pos.z = rocks[i].pz;
-        posData.push(pos);
-    }
-    return posData;
 }
 
 function depthSort() {
@@ -290,23 +301,12 @@ function drawCanvas(canvasId, topView, sortedRocks) {
             ctx.rect(focus.x - r, (topView ? focus.z : focus.y) - r, w, w);
             ctx.stroke();
         }
-        if(selectedRock != undefined && selectedRock != -1 && posHistory.length > 0){
-            let ff = (element) => selectedRock == element.id;
+
+        if(selectedRock != undefined && selectedRock != -1){
             ctx.beginPath();
-            // ctx.moveTo(posHistory[0][posHistory.findIndex(ff)].x, posHistory[0][posHistory.findIndex(ff)].y);
-            let firstOne = true;
-            for(let i = 0;i < posHistory.length;i++){
-                let pos = posHistory[i];
-                let foundIndex = pos.findIndex(ff);
-                if(foundIndex != -1){
-                    if(firstOne){
-                        ctx.moveTo(pos[foundIndex].x, topView ? pos[foundIndex].z : pos[foundIndex].y);
-                        firstOne = false;
-                    }
-                    else{
-                        ctx.lineTo(pos[foundIndex].x, topView ? pos[foundIndex].z : pos[foundIndex].y)
-                    }
-                }
+            for(let i = 0;i < rockHistory[selectedRock].length;i++){
+                let pos = rockHistory[selectedRock][i];
+                ctx.lineTo(pos.x, topView ? pos.z : pos.y)
             }
             ctx.stroke();
         }
