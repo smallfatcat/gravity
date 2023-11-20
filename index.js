@@ -77,6 +77,7 @@ let rockHistory = [];
 let maxHistory = 5000;
 let allTrails = false;
 let updateNumber = 0;
+let historyResolution = 10;
 
 let rocks = initRocks(defaultSeed);
 initRockHistory();
@@ -211,12 +212,11 @@ function storeRockHistory() {
 
 physicsWorker.onmessage = (evt) => {
     let data = JSON.parse(evt.data);
-    // if(posHistory.length == posHistorySize){
-    //     posHistory.shift();
-    // }
-    // posHistory.push(getTrailData());
+
     if(updateNumber == data.u) {
-        storeRockHistory();
+        if(frameCounter%historyResolution == 0){
+            storeRockHistory();
+        }
         rocks = data.rocks;
         numberOfRocks = rocks.length;
         uniqueID = data.uniqueID;
@@ -224,9 +224,7 @@ physicsWorker.onmessage = (evt) => {
         
         frameCounter++;
 
-        // if(!paused){
-            depthSort();
-        // }
+        depthSort();
         
         simTime = Math.floor((window.performance.now() - simStart) / 1000);
     }
@@ -294,6 +292,17 @@ function drawCanvas(canvasId, topView, sortedRocks) {
         else {
             ctx.translate(-rocks[0].px + canvas.width / 2 / canvasScale, -(topView ? rocks[0].pz : rocks[0].py) + canvas.height / 2 / canvasScale);
         }
+
+        if(allTrails) {
+            for(let trail of rockHistory){
+                ctx.beginPath();
+                for(let pos of trail){
+                    ctx.lineTo(pos.x, topView ? pos.z : pos.y)
+                }
+                ctx.stroke();
+            }
+        }
+
         for (let rock of sortedRocks) {
             ctx.beginPath();
             ctx.arc(rock.px, topView ? rock.pz : rock.py, rock.r, 0, Math.PI * 2, true);
@@ -318,16 +327,6 @@ function drawCanvas(canvasId, topView, sortedRocks) {
             }
             ctx.stroke();
         }
-        
-        if(allTrails) {
-            for(let trail of rockHistory){
-                ctx.beginPath();
-                for(let pos of trail){
-                    ctx.lineTo(pos.x, topView ? pos.z : pos.y)
-                }
-                ctx.stroke();
-            }
-        }
 
         ctx.setTransform(1, 0, 0, 1, 0, 0);
     }
@@ -344,7 +343,6 @@ function drawRockInfo(rockID){
     let ff = (element) => rockID == element.id;
     let ri = rocks.findIndex(ff);
     if(rockID != undefined && ri != -1){
-
         document.getElementById("srock").hidden         = false;
         document.getElementById("rockid").innerHTML     = rocks[ri].id;
         document.getElementById("rockmass").innerHTML   = rocks[ri].m.toExponential();
@@ -528,7 +526,6 @@ function getClosestRockID(x, y, pane){
     let closestId = -1;
     for(let i=0; i < numberOfRocks; i++) {
         let opt = pane == LEFT_PANE ? rocks[i].py - y : rocks[i].pz - y;
-        // let dist = ((rocks[i].px - x) * (rocks[i].px - x) +  opt * opt)**0.5;
         let dist = Math.hypot(rocks[i].px - x, opt);
         if (dist < closestDist) {
             closestId = rocks[i].id;
