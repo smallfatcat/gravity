@@ -19,6 +19,8 @@ let tickStart = Date.now();
 
 let simEnable = false;
 
+let updateNumber = 0;
+
 // let updateIntervalID;
 
 onmessage = (evt) => {
@@ -27,6 +29,7 @@ onmessage = (evt) => {
         rocks = data.rocks;
         uniqueID = 0;
         numberOfRocks = rocks.length;
+        updateNumber = data.u;
         // updateIntervalID = setInterval(updateRocks, 16);
         throttleUpdates();
     }
@@ -96,7 +99,7 @@ function updateRocks() {
 
         let tickDuration = Date.now() - tickStart;
 
-        postMessage(JSON.stringify({rocks: rocks, uniqueID: uniqueID, genID: genID, tickDuration: tickDuration}));
+        postMessage(JSON.stringify({rocks: rocks, uniqueID: uniqueID, u: updateNumber, tickDuration: tickDuration}));
     }
     throttleUpdates();
 }

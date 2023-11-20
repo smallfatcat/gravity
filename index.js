@@ -75,6 +75,8 @@ let rocksSortedY;
 let focusActive = false;
 let rockHistory = [];
 let maxHistory = 5000;
+let allTrails = false;
+let updateNumber = 0;
 
 let rocks = initRocks(defaultSeed);
 initRockHistory();
@@ -213,19 +215,24 @@ physicsWorker.onmessage = (evt) => {
     //     posHistory.shift();
     // }
     // posHistory.push(getTrailData());
-    storeRockHistory();
-    rocks = data.rocks;
-    numberOfRocks = rocks.length;
-    uniqueID = data.uniqueID;
-    tickDuration = data.tickDuration;
-    
-    frameCounter++;
+    if(updateNumber == data.u) {
+        storeRockHistory();
+        rocks = data.rocks;
+        numberOfRocks = rocks.length;
+        uniqueID = data.uniqueID;
+        tickDuration = data.tickDuration;
+        
+        frameCounter++;
 
-    // if(!paused){
-        depthSort();
-    // }
-    
-    simTime = Math.floor((window.performance.now() - simStart) / 1000);
+        // if(!paused){
+            depthSort();
+        // }
+        
+        simTime = Math.floor((window.performance.now() - simStart) / 1000);
+    }
+    else{
+        console.log("data skipped");
+    }
 }
 
 function depthSort() {
@@ -237,7 +244,8 @@ function depthSort() {
 }
 
 function sendRocksToWorker() {
-    physicsWorker.postMessage(JSON.stringify({t: 'UPDATE', rocks: rocks, uniqueID: uniqueID}));
+    updateNumber ++;
+    physicsWorker.postMessage(JSON.stringify({t: 'UPDATE', u: updateNumber, rocks: rocks, uniqueID: uniqueID}));
 }
 
 function draw() {
@@ -309,6 +317,16 @@ function drawCanvas(canvasId, topView, sortedRocks) {
                 ctx.lineTo(pos.x, topView ? pos.z : pos.y)
             }
             ctx.stroke();
+        }
+        
+        if(allTrails) {
+            for(let trail of rockHistory){
+                ctx.beginPath();
+                for(let pos of trail){
+                    ctx.lineTo(pos.x, topView ? pos.z : pos.y)
+                }
+                ctx.stroke();
+            }
         }
 
         ctx.setTransform(1, 0, 0, 1, 0, 0);
