@@ -21,6 +21,8 @@ let simEnable = false;
 
 let updateNumber = 0;
 
+let targetDuration = 10;
+
 // let updateIntervalID;
 
 onmessage = (evt) => {
@@ -40,15 +42,23 @@ onmessage = (evt) => {
     }
 }
 
-function throttleUpdates() {
-    setTimeout(updateRocks, 10);
+function throttleUpdates(duration) {
+    if(duration <= targetDuration){
+        duration = targetDuration - duration;
+    }
+    else{
+        duration = 0;
+    }
+    // console.log(duration);
+    setTimeout(updateRocks, duration);
 }
 
 function postToUI(message) {
-    physicsWorker.postMessage(JSON.stringify(message));
+    postMessage(JSON.stringify(message));
 }
 
 function updateRocks() {
+    let updateStart = Date.now();
     if(!paused){
         tickStart = Date.now();
         for (let i = 0; i < numberOfRocks; i++) {
@@ -104,7 +114,8 @@ function updateRocks() {
 
         postToUI( {rocks: rocks, uniqueID: uniqueID, u: updateNumber, tickDuration: tickDuration} );
     }
-    throttleUpdates();
+    let updateDuration = Date.now() - updateStart;
+    throttleUpdates(updateDuration);
 }
 
 

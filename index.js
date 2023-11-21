@@ -23,6 +23,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function animate(timeStamp) {
+    let animTimeStart = Date.now();
+    let animTimeDuration = animTimeStart - animTimeLastFrame;
+    animTimeLastFrame = animTimeStart;
+    fps = 1000 / animTimeDuration;
     draw();
     requestAnimationFrame((t) => animate(t));
 }
@@ -36,7 +40,7 @@ const clone = (items) => items.map(item => Array.isArray(item) ? clone(item) : i
 const physicsWorker = new Worker("physics.js")
 
 let tickDuration = 0;
-let tickDurationInterval = 10;
+let tickDurationInterval = 0;
 
 let canvasScale     = 0.6;
 
@@ -62,7 +66,8 @@ let selectedRock = -1;
 let numberOfRocks   = 500;
 let frameCounter    = 0;
 
-let fps;
+let fps = 0;
+let animTimeLastFrame = 0;
 let simTime;
 let simStart = window.performance.now();
 let paused = false;
@@ -254,7 +259,7 @@ function draw() {
     drawCanvas("canvasRight", true, rocksSortedY);
     
     let drawTime = window.performance.now() - drawTimeStart;
-    fps = 1000 / (tickDuration + drawTime + tickDurationInterval);
+    // fps = 1000 / (tickDuration + drawTime + tickDurationInterval);
 
     let so = '<span width="20px>"'
 
