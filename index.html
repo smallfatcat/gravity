@@ -5,13 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Gravity Demo</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@500&display=swap');
+  </style>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <script src="chroma.js"></script>
   <script src="index.js"></script>
-  <div id="status"></div>
-  <div id="control">
+  <div id="status" class="cntrl"></div>
+  <div id="control" class="cntrl">
     <button id="reset" class="buttons w50">Reset</button>
     <label for="seed">Seed</label>
     <input type="text" id="seed" class="w100">
@@ -36,6 +39,9 @@
     <label for="discbottom">Disc Bottom</label>
     <input type="text" id="discbottom" class="w25">
     <br>
+    
+  </div>
+  <div id="btns" class="cntrl">
     <button id="pause" class="buttons w50">Pause</button>
     <button id="scaleup" class="buttons">+</button>
     <button id="scaledn" class="buttons">-</button>
@@ -43,7 +49,7 @@
   </div>
   <canvas id="canvasLeft" width="600" height="600"></canvas>
   <canvas id="canvasRight" width="600" height="600"></canvas>
-  <div id="srock" class="s1">
+  <div id="srock" class="s1 cntrl">
     <table class="t1">
       <tr>
         <td class="column">RockID</td>

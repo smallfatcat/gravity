@@ -70,14 +70,14 @@ let paused = false;
 let defaultSeed = Date.now();
 let rand;
 
-let rocksSortedZ;
-let rocksSortedY;
+let rocksSortedZ = [];
+let rocksSortedY = [];
 let focusActive = false;
 let rockHistory = [];
-let maxHistory = 5000;
+let maxHistory = 1000;
 let allTrails = false;
 let updateNumber = 0;
-let historyResolution = 10;
+let historyResolution = 20;
 
 let rocks = initRocks(defaultSeed);
 initRockHistory();
@@ -203,6 +203,7 @@ function storeRockHistory() {
         pos.x = rocks[i].px;
         pos.y = rocks[i].py;
         pos.z = rocks[i].pz;
+        pos.matColor = rocks[i].matColor;
         if(rockHistory[rocks[i].id].length > maxHistory){
             rockHistory[rocks[i].id].shift();
         }
@@ -243,7 +244,7 @@ function depthSort() {
 
 function sendRocksToWorker() {
     updateNumber ++;
-    physicsWorker.postMessage(JSON.stringify({t: 'UPDATE', u: updateNumber, rocks: rocks, uniqueID: uniqueID}));
+    postToPhysics( {t: 'UPDATE', u: updateNumber, rocks: rocks, uniqueID: uniqueID} );
 }
 
 function draw() {
@@ -280,56 +281,64 @@ function drawCanvas(canvasId, topView, sortedRocks) {
     let focus = getFocus();
 
     const canvas = document.getElementById(canvasId);
-    if (canvasLeft.getContext) {
-        const ctx = canvas.getContext("2d");
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.lineWidth = 1 / canvasScale;
+    const ctx = canvas.getContext("2d");
 
-        ctx.scale(canvasScale, canvasScale);
-        if(focusActive) {
-            ctx.translate(-focus.x + canvas.width / 2 / canvasScale, -(topView ? focus.z : focus.y) + canvas.height / 2 / canvasScale);
-        }
-        else {
-            ctx.translate(-rocks[0].px + canvas.width / 2 / canvasScale, -(topView ? rocks[0].pz : rocks[0].py) + canvas.height / 2 / canvasScale);
-        }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.lineWidth = 1 / canvasScale;
 
-        if(allTrails) {
-            for(let trail of rockHistory){
-                ctx.beginPath();
-                for(let pos of trail){
-                    ctx.lineTo(pos.x, topView ? pos.z : pos.y)
-                }
-                ctx.stroke();
-            }
-        }
+    ctx.scale(canvasScale, canvasScale);
+    if(focusActive) {
+        ctx.translate(-focus.x + canvas.width / 2 / canvasScale, -(topView ? focus.z : focus.y) + canvas.height / 2 / canvasScale);
+    }
+    else {
+        ctx.translate(-rocks[0].px + canvas.width / 2 / canvasScale, -(topView ? rocks[0].pz : rocks[0].py) + canvas.height / 2 / canvasScale);
+    }
 
-        for (let rock of sortedRocks) {
+    // All rock trails
+    ctx.strokeStyle = '#70707070';
+    if(allTrails) {
+        for(let trail of rockHistory){
             ctx.beginPath();
-            ctx.arc(rock.px, topView ? rock.pz : rock.py, rock.r, 0, Math.PI * 2, true);
-            ctx.fillStyle = chroma(rock.matColor._rgb[0],rock.matColor._rgb[1],rock.matColor._rgb[2]);
-            //ctx.strokeStyle = '#cccccc';
-            ctx.fill();
-            ctx.stroke();
-        }
-        if(selectedRock != undefined){
-            let r = focus.r + 4;
-            let w = r * 2;
-            ctx.beginPath();
-            ctx.rect(focus.x - r, (topView ? focus.z : focus.y) - r, w, w);
-            ctx.stroke();
-        }
-
-        if(selectedRock != undefined && selectedRock != -1){
-            ctx.beginPath();
-            for(let i = 0;i < rockHistory[selectedRock].length;i++){
-                let pos = rockHistory[selectedRock][i];
+            ctx.strokeStyle = trail.length == 0 ? chroma('black') : chroma(trail[0].matColor._rgb);
+            for(let pos of trail){
                 ctx.lineTo(pos.x, topView ? pos.z : pos.y)
             }
             ctx.stroke();
         }
-
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
     }
+
+    // Selected rock trail
+    if(selectedRock != undefined && selectedRock != -1 && rockHistory[1].length > 0 && selectedRock < rockHistory.length){
+        ctx.beginPath();
+        let sr = rockHistory[selectedRock];
+        ctx.strokeStyle = chroma(sr[sr.length-1].matColor._rgb);
+        for(let i = 0;i < sr.length;i++){
+            let pos = sr[i];
+            ctx.lineTo(pos.x, topView ? pos.z : pos.y)
+        }
+        ctx.stroke();
+    }
+    
+    // Rocks
+    for (let rock of sortedRocks) {
+        ctx.beginPath();
+        ctx.arc(rock.px, topView ? rock.pz : rock.py, rock.r, 0, Math.PI * 2, true);
+        ctx.fillStyle = chroma(rock.matColor._rgb);
+        ctx.fill();
+        //ctx.stroke();
+    }
+
+    // Selected rock marker
+    if(selectedRock != undefined){
+        let r = focus.r + 4;
+        let w = r * 2;
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.rect(focus.x - r, (topView ? focus.z : focus.y) - r, w, w);
+        ctx.stroke();
+    }
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
 }
 
 function getAngle(focus, topView) {
@@ -473,14 +482,18 @@ function focusClick() {
 
 function resumePlayback() {
     paused = false;
-    physicsWorker.postMessage(JSON.stringify({t: 'PLAY'}));
+    postToPhysics( {t: 'PLAY'} );
     document.getElementById("pause").innerHTML = "Pause";
 }
 
 function pausePlayback() {
     paused = true;
-    physicsWorker.postMessage(JSON.stringify({t: 'PAUSE'}));
+    postToPhysics( {t: 'PAUSE'} );
     document.getElementById("pause").innerHTML = "Play";
+}
+
+function postToPhysics(message) {
+    physicsWorker.postMessage(JSON.stringify(message));
 }
 
 function getFocus() {

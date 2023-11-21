@@ -1,11 +1,21 @@
 body{
-    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    /* font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; */
+    font-family: 'Open Sans', sans-serif;
     font-size: 20;
-    /* background-color: rgb(44, 44, 44); */
+    background-color: rgb(14, 13, 13);
+}
+
+input{
+    background-color: black;
+    color: white;
+    font-family: 'Open Sans', sans-serif;
 }
 
 .buttons{
-    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    font-family: 'Open Sans', sans-serif;
+    color: lightgrey;
+    background-color: rgb(70, 68, 68);
+    /* font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; */
 }
 
 .w25{
@@ -24,11 +34,20 @@ body{
     width: 100px;
 }
 
+.w150{
+    width: 150px;
+}
+
+.w200{
+    width: 200px;
+}
+
 .s1{
     position: fixed;
     font-size: 12px;
     top: 100px;
     left: 600px;
+    font-weight: bold;
 }
 
 .coords{
@@ -43,4 +62,12 @@ body{
 .t1{
     table-layout: fixed;
 
+}
+.cntrl{
+    background-color: dimgrey;
+    border-radius: 4px;
+    margin: 4px;
+    padding: 2px;
+    width: fit-content;
+    color: rgb(230, 230, 233);
 }

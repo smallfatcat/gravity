@@ -44,6 +44,10 @@ function throttleUpdates() {
     setTimeout(updateRocks, 10);
 }
 
+function postToUI(message) {
+    physicsWorker.postMessage(JSON.stringify(message));
+}
+
 function updateRocks() {
     if(!paused){
         tickStart = Date.now();
@@ -98,7 +102,7 @@ function updateRocks() {
 
         let tickDuration = Date.now() - tickStart;
 
-        postMessage(JSON.stringify({rocks: rocks, uniqueID: uniqueID, u: updateNumber, tickDuration: tickDuration}));
+        postToUI( {rocks: rocks, uniqueID: uniqueID, u: updateNumber, tickDuration: tickDuration} );
     }
     throttleUpdates();
 }
